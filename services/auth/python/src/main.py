@@ -81,6 +81,6 @@ async def verify(user_id: UUID = Depends(get_current_user_id)):
     return VerifyResponse(valid=True, user_id=user_id)
 
 
-@app.get("/users/me", response_model=UserResponse)
+@app.get("/auth/users/me", response_model=UserResponse)
 async def get_me(user_id: UUID = Depends(get_current_user_id)):
     return await get_user_by_id(user_id)
