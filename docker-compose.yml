@@ -55,20 +55,23 @@ services:
         condition: service_healthy
 
   # ===================
-  # Services (Phase 1에서 추가 예정)
+  # Services
   # ===================
-  # gateway:
-  #   build:
-  #     context: ./services/gateway/python
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - flash-network
+  gateway:
+    build:
+      context: ./services/gateway/python
+    container_name: flash-deals-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      AUTH_SERVICE_URL: http://auth:8001
+      PRODUCT_SERVICE_URL: http://product:8002
+      ORDER_SERVICE_URL: http://order:8003
+      OTEL_ENABLED: false
+      OTEL_SERVICE_NAME: gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+    networks:
+      - flash-network
 
   # auth:
   #   build:
