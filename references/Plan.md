@@ -32,10 +32,10 @@
 - [x] **2. 인프라 기본 설정**
   - [x] Monorepo 폴더 구조 생성 (services/, infra/, tests/)
   - [x] Docker Compose 환경 구성 (PostgreSQL, Redis)
-- [ ] **3. Gateway (Python FastAPI)** - 기본 라우팅
-  - [ ] Dockerfile, pyproject.toml 설정
-  - [ ] `httpx`를 이용한 요청 라우팅 (Proxy)
-  - [ ] 공개 경로(`/auth/*`) 설정
+- [x] **3. Gateway (Python FastAPI)** - 기본 라우팅
+  - [x] Dockerfile, pyproject.toml 설정 (uv 사용)
+  - [x] `httpx`를 이용한 요청 라우팅 (Proxy)
+  - [x] 공개 경로(`/auth/*`) 설정
 - [ ] **4. Auth Service (Python)**
   - [ ] DB Schema/Query 작성 및 sqlc 설정
   - [ ] JWT 발급 및 검증 로직 구현
