@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Server
+    host: str = "0.0.0.0"
+    port: int = 8001
+
     # Database
     database_url: str = "postgresql+asyncpg://flash:flash1234@localhost:5432/flash_deals"
 

@@ -14,8 +14,9 @@ RUN uv sync --frozen --no-dev
 # Copy source code
 COPY src/ ./src/
 
-# Expose port
-EXPOSE 8000
+# Default port (can be overridden by PORT env)
+ENV PORT=8000
+EXPOSE ${PORT}
 
 # Run the application
-CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD uv run python -m src.run

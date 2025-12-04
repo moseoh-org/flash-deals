@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # Server
+    host: str = "0.0.0.0"
+    port: int = 8000
+
     # Service URLs (환경변수로 주입)
     auth_service_url: str = "http://localhost:8001"
     product_service_url: str = "http://localhost:8002"
