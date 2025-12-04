@@ -470,7 +470,7 @@ components:
       properties:
         delta:
           type: integer
-          description: 재고 변경량 (양수: 증가, 음수: 감소)
+          description: "재고 변경량 (양수: 증가, 음수: 감소)"
           example: -1
 
     CreateDealRequest:
