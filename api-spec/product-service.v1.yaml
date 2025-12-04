@@ -1,0 +1,599 @@
+openapi: 3.0.4
+info:
+  title: Product Service API
+  description: 상품 및 재고 관리 서비스
+  version: 1.0.0
+  contact:
+    name: Flash Deal Team
+
+servers:
+  - url: http://localhost:8002
+    description: Local development server
+
+tags:
+  - name: products
+    description: 상품 관리 API
+  - name: deals
+    description: 핫딜(타임세일) 관리 API
+
+paths:
+  /health:
+    get:
+      summary: 헬스 체크
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 서비스 정상
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /products:
+    get:
+      tags:
+        - products
+      summary: 상품 목록 조회
+      operationId: listProducts
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+    post:
+      tags:
+        - products
+      summary: 상품 등록
+      operationId: createProduct
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '201':
+          description: 상품 등록 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: 인증 필요
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{product_id}:
+    get:
+      tags:
+        - products
+      summary: 상품 상세 조회
+      operationId: getProduct
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: 상품 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - products
+      summary: 상품 정보 수정
+      operationId: updateProduct
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+        '404':
+          description: 상품 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{product_id}/stock:
+    get:
+      tags:
+        - products
+      summary: 재고 조회
+      operationId: getStock
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponse'
+        '404':
+          description: 상품 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      tags:
+        - products
+      summary: 재고 수정
+      description: 재고 증가/감소 처리. 내부 서비스 호출용.
+      operationId: updateStock
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStockRequest'
+      responses:
+        '200':
+          description: 재고 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockResponse'
+        '400':
+          description: 재고 부족
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 상품 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /deals:
+    get:
+      tags:
+        - deals
+      summary: 진행 중인 핫딜 목록 조회
+      operationId: listActiveDeals
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealListResponse'
+
+    post:
+      tags:
+        - deals
+      summary: 핫딜 등록
+      operationId: createDeal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDealRequest'
+      responses:
+        '201':
+          description: 핫딜 등록 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealResponse'
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /deals/{deal_id}:
+    get:
+      tags:
+        - deals
+      summary: 핫딜 상세 조회
+      operationId: getDeal
+      parameters:
+        - name: deal_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DealResponse'
+        '404':
+          description: 핫딜 없음
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+          example: healthy
+        service:
+          type: string
+          example: product-service
+
+    CreateProductRequest:
+      type: object
+      required:
+        - name
+        - price
+        - stock
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: 애플 맥북 프로 14인치
+        description:
+          type: string
+          maxLength: 5000
+          example: M3 Pro 칩셋, 18GB RAM, 512GB SSD
+        price:
+          type: integer
+          minimum: 0
+          description: 원 단위 가격
+          example: 2390000
+        stock:
+          type: integer
+          minimum: 0
+          description: 초기 재고 수량
+          example: 100
+        category:
+          type: string
+          maxLength: 50
+          example: electronics
+        image_url:
+          type: string
+          format: uri
+          example: https://example.com/images/macbook.jpg
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        price:
+          type: integer
+          minimum: 0
+        category:
+          type: string
+          maxLength: 50
+        image_url:
+          type: string
+          format: uri
+
+    ProductResponse:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - stock
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          example: 애플 맥북 프로 14인치
+        description:
+          type: string
+          example: M3 Pro 칩셋, 18GB RAM, 512GB SSD
+        price:
+          type: integer
+          example: 2390000
+        stock:
+          type: integer
+          example: 100
+        category:
+          type: string
+          example: electronics
+        image_url:
+          type: string
+          format: uri
+          example: https://example.com/images/macbook.jpg
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-01-15T09:30:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-01-15T09:30:00Z
+
+    ProductListResponse:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - size
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        total:
+          type: integer
+          example: 150
+        page:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 20
+
+    StockResponse:
+      type: object
+      required:
+        - product_id
+        - stock
+        - updated_at
+      properties:
+        product_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        stock:
+          type: integer
+          example: 95
+        updated_at:
+          type: string
+          format: date-time
+          example: 2024-01-15T10:00:00Z
+
+    UpdateStockRequest:
+      type: object
+      required:
+        - delta
+      properties:
+        delta:
+          type: integer
+          description: 재고 변경량 (양수: 증가, 음수: 감소)
+          example: -1
+
+    CreateDealRequest:
+      type: object
+      required:
+        - product_id
+        - deal_price
+        - deal_stock
+        - starts_at
+        - ends_at
+      properties:
+        product_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        deal_price:
+          type: integer
+          minimum: 0
+          description: 핫딜 할인가
+          example: 1990000
+        deal_stock:
+          type: integer
+          minimum: 1
+          description: 핫딜 수량
+          example: 50
+        starts_at:
+          type: string
+          format: date-time
+          description: 핫딜 시작 시간
+          example: 2024-01-20T12:00:00Z
+        ends_at:
+          type: string
+          format: date-time
+          description: 핫딜 종료 시간
+          example: 2024-01-20T13:00:00Z
+
+    DealResponse:
+      type: object
+      required:
+        - id
+        - product_id
+        - deal_price
+        - deal_stock
+        - remaining_stock
+        - starts_at
+        - ends_at
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 660e8400-e29b-41d4-a716-446655440001
+        product_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        product:
+          $ref: '#/components/schemas/ProductResponse'
+        deal_price:
+          type: integer
+          example: 1990000
+        original_price:
+          type: integer
+          example: 2390000
+        deal_stock:
+          type: integer
+          description: 핫딜 총 수량
+          example: 50
+        remaining_stock:
+          type: integer
+          description: 핫딜 남은 수량
+          example: 45
+        starts_at:
+          type: string
+          format: date-time
+          example: 2024-01-20T12:00:00Z
+        ends_at:
+          type: string
+          format: date-time
+          example: 2024-01-20T13:00:00Z
+        status:
+          type: string
+          enum: [scheduled, active, sold_out, ended]
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          example: 2024-01-15T09:30:00Z
+
+    DealListResponse:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - size
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DealResponse'
+        total:
+          type: integer
+          example: 10
+        page:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 20
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: NOT_FOUND
+        message:
+          type: string
+          example: 상품을 찾을 수 없습니다.
+        details:
+          type: object
+          additionalProperties: true
