@@ -12,6 +12,7 @@
 - **Language:** Python 3.12 (FastAPI)
 - **Database:** PostgreSQL 16 (Asyncpg driver)
 - **ORM/Query:** `sqlc` (SQL First Code Generation)
+- **Migration:** `golang-migrate` (언어 독립적 SQL 마이그레이션)
 - **Architecture:** Microservices (Docker Compose base)
 - **Communication:** REST API (HTTP 1.1)
 
@@ -28,9 +29,9 @@
   - [x] api-spec/product-service.v1.yaml 작성
   - [x] api-spec/order-service.v1.yaml 작성
   - [x] Review: 각 명세서의 Request/Response 필드 확정
-- [ ] **2. 인프라 기본 설정**
-  - [ ] Monorepo 폴더 구조 생성 (services/, infra/, tests/)
-  - [ ] Docker Compose 환경 구성 (PostgreSQL, Redis)
+- [x] **2. 인프라 기본 설정**
+  - [x] Monorepo 폴더 구조 생성 (services/, infra/, tests/)
+  - [x] Docker Compose 환경 구성 (PostgreSQL, Redis)
 - [ ] **3. Gateway (Python FastAPI)** - 기본 라우팅
   - [ ] Dockerfile, pyproject.toml 설정
   - [ ] `httpx`를 이용한 요청 라우팅 (Proxy)

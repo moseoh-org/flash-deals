@@ -1,0 +1,114 @@
+services:
+  # ===================
+  # Infrastructure
+  # ===================
+  postgres:
+    image: postgres:16-alpine
+    container_name: flash-deals-postgres
+    environment:
+      POSTGRES_USER: flash
+      POSTGRES_PASSWORD: flash1234
+      POSTGRES_DB: flash_deals
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flash -d flash_deals"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flash-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: flash-deals-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - flash-network
+
+  # ===================
+  # Database Migration
+  # ===================
+  migrate:
+    image: migrate/migrate:v4.17.0
+    container_name: flash-deals-migrate
+    profiles:
+      - migration
+    volumes:
+      - ./services/auth/db/migrations:/migrations/auth:ro
+      - ./services/product/db/migrations:/migrations/product:ro
+      - ./services/order/db/migrations:/migrations/order:ro
+    networks:
+      - flash-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ===================
+  # Services (Phase 1에서 추가 예정)
+  # ===================
+  # gateway:
+  #   build:
+  #     context: ./services/gateway/python
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - flash-network
+
+  # auth:
+  #   build:
+  #     context: ./services/auth/python
+  #   ports:
+  #     - "8001:8001"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - flash-network
+
+  # product:
+  #   build:
+  #     context: ./services/product/python
+  #   ports:
+  #     - "8002:8002"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - flash-network
+
+  # order:
+  #   build:
+  #     context: ./services/order/python
+  #   ports:
+  #     - "8003:8003"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   networks:
+  #     - flash-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  flash-network:
+    driver: bridge
