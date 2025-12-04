@@ -52,6 +52,7 @@ def get_current_user_id(token: str | None = Depends(get_token_from_header)) -> U
 
 
 @app.get("/health", response_model=HealthResponse)
+@app.get("/auth/health", response_model=HealthResponse)
 async def health_check():
     return HealthResponse(status="healthy", service="auth-service")
 
