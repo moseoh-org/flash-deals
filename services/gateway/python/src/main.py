@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from src.auth import extract_token, public_route_validator, verify_token
 from src.proxy import get_target_url, proxy_request
 from src.telemetry import setup_telemetry
 
@@ -38,6 +39,28 @@ async def gateway_proxy(request: Request, path: str):
                 "message": f"No service found for path: {full_path}",
             },
         )
+
+    # JWT 검증 (공개 경로가 아닌 경우)
+    if not public_route_validator.is_public(full_path, request.method):
+        token = extract_token(request)
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "UNAUTHORIZED",
+                    "message": "인증이 필요합니다.",
+                },
+            )
+
+        verify_result = await verify_token(token)
+        if not verify_result:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "INVALID_TOKEN",
+                    "message": "유효하지 않은 토큰입니다.",
+                },
+            )
 
     # 프록시 요청 수행
     try:
