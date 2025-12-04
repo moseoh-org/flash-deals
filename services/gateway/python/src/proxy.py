@@ -6,9 +6,7 @@ from src.config import settings
 # 서비스 라우팅 맵
 SERVICE_MAP = {
     "/auth": settings.auth_service_url,
-    "/users": settings.auth_service_url,
     "/products": settings.product_service_url,
-    "/deals": settings.product_service_url,
     "/orders": settings.order_service_url,
 }
 
