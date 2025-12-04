@@ -45,8 +45,8 @@ class TestJwtAuthentication:
         """인증 필요 경로에 토큰 없이 접근 시 401 반환"""
         api = playwright.request.new_context(base_url=base_url)
 
-        # /users/me는 인증 필요
-        response = api.get("/users/me")
+        # /auth/users/me는 인증 필요
+        response = api.get("/auth/users/me")
 
         assert response.status == 401
         data = response.json()
@@ -59,7 +59,7 @@ class TestJwtAuthentication:
         api = playwright.request.new_context(base_url=base_url)
 
         response = api.get(
-            "/users/me",
+            "/auth/users/me",
             headers={"Authorization": "Bearer invalid_token"},
         )
 
@@ -85,9 +85,9 @@ class TestJwtAuthentication:
         )
         access_token = login_response.json()["access_token"]
 
-        # /users/me 접근
+        # /auth/users/me 접근
         response = api.get(
-            "/users/me",
+            "/auth/users/me",
             headers={"Authorization": f"Bearer {access_token}"},
         )
 

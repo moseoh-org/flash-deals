@@ -247,7 +247,7 @@ class TestRefresh:
 
 
 class TestGetMe:
-    """GET /users/me"""
+    """GET /auth/users/me"""
 
     def test_get_me_success(self, playwright: Playwright, base_url: str):
         api = playwright.request.new_context(base_url=base_url)
@@ -266,7 +266,7 @@ class TestGetMe:
 
         # 내 정보 조회
         response = api.get(
-            "/users/me",
+            "/auth/users/me",
             headers={"Authorization": f"Bearer {access_token}"},
         )
 
@@ -280,6 +280,6 @@ class TestGetMe:
     def test_get_me_no_token_returns_401(self, playwright: Playwright, base_url: str):
         api = playwright.request.new_context(base_url=base_url)
 
-        response = api.get("/users/me")
+        response = api.get("/auth/users/me")
 
         assert response.status == 401

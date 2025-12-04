@@ -14,6 +14,8 @@ class PublicRouteValidator:
                 # Health
                 Route("/health", endpoint=lambda: None, methods=["GET"]),
                 Route("/auth/health", endpoint=lambda: None, methods=["GET"]),
+                Route("/products/health", endpoint=lambda: None, methods=["GET"]),
+                Route("/orders/health", endpoint=lambda: None, methods=["GET"]),
                 # Auth (public)
                 Route("/auth/register", endpoint=lambda: None, methods=["POST"]),
                 Route("/auth/login", endpoint=lambda: None, methods=["POST"]),
@@ -22,9 +24,8 @@ class PublicRouteValidator:
                 Route("/products", endpoint=lambda: None, methods=["GET"]),
                 Route("/products/{product_id}", endpoint=lambda: None, methods=["GET"]),
                 Route("/products/{product_id}/stock", endpoint=lambda: None, methods=["GET"]),
-                # Deals (public read)
-                Route("/deals", endpoint=lambda: None, methods=["GET"]),
-                Route("/deals/{deal_id}", endpoint=lambda: None, methods=["GET"]),
+                Route("/products/deals", endpoint=lambda: None, methods=["GET"]),
+                Route("/products/deals/{deal_id}", endpoint=lambda: None, methods=["GET"]),
             ]
         )
 
