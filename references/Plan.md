@@ -36,13 +36,13 @@
   - [x] Dockerfile, pyproject.toml 설정 (uv 사용)
   - [x] `httpx`를 이용한 요청 라우팅 (Proxy)
   - [x] 공개 경로(`/auth/*`) 설정
-- [ ] **4. Auth Service (Python)**
-  - [ ] DB Schema/Query 작성 및 sqlc 설정
-  - [ ] JWT 발급 및 검증 로직 구현
-  - [ ] User 회원가입/로그인 API
-- [ ] **5. Gateway 고도화** - JWT 검증 추가
-  - [ ] JWT 검증 Middleware 구현
-  - [ ] 인증 필요 경로에 Middleware 적용
+- [x] **4. Auth Service (Python)**
+  - [x] DB Schema/Query 작성 및 sqlc 설정
+  - [x] JWT 발급 및 검증 로직 구현
+  - [x] User 회원가입/로그인 API
+- [x] **5. Gateway 고도화** - JWT 검증 추가
+  - [x] JWT 검증 Middleware 구현
+  - [x] 인증 필요 경로에 Middleware 적용
 - [ ] **6. Product Service (Python)**
   - [ ] DB Schema/Query 작성 및 sqlc 설정
   - [ ] 상품 등록 및 재고 조회 API
