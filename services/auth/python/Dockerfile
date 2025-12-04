@@ -15,7 +15,7 @@ RUN uv sync --frozen --no-dev
 COPY src/ ./src/
 
 # Default port (can be overridden by PORT env)
-ENV PORT=8000
+ENV PORT=8001
 EXPOSE ${PORT}
 
 # Run the application

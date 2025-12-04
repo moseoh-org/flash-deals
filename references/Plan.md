@@ -57,9 +57,10 @@
 
 **목표:** 최적화 전, 현재 시스템의 성능 지표를 수집하여 비교군(Control Group)을 형성한다.
 
-- [ ] **E2E Testing (Functional)**
-  - [ ] **Tool:** `Pytest` + `Tavern`
-  - [ ] API Spec(Swagger) 기반의 통합 테스트 시나리오 작성 (Code-based)
+- [x] **Integration Testing (API)**
+  - [x] **Tool:** `pytest-playwright` (Python, uv 사용)
+  - [x] **Location:** `tests/integration/` (서비스 독립적, API 명세 기반)
+  - [x] API Spec(Swagger) 기반의 통합 테스트 시나리오 작성 (Code-based)
   - [ ] CI 파이프라인 연동 준비 (Github Actions 등)
 - [ ] **Observability (Monitoring)**
   - [ ] **Tool:** **SigNoz** (OpenTelemetry Native APM)

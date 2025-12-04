@@ -4,19 +4,23 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Server
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8001
 
-    # Service URLs (환경변수로 주입)
-    auth_service_url: str = "http://localhost:8001"
-    product_service_url: str = "http://localhost:8002"
-    order_service_url: str = "http://localhost:8003"
+    # Database
+    database_url: str = "postgresql+asyncpg://flash:flash1234@localhost:5432/flash_deals"
+
+    # JWT
+    jwt_secret_key: str = "your-secret-key-change-in-production"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60
+    refresh_token_expire_days: int = 7
 
     # OpenTelemetry
     otel_enabled: bool = False
-    otel_service_name: str = "gateway"
+    otel_service_name: str = "auth-service"
     otel_exporter_otlp_endpoint: str = "http://localhost:4317"
 
-    # Gateway settings
+    # Service settings
     debug: bool = False
 
     class Config:
