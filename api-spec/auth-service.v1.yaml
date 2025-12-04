@@ -29,6 +29,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
 
+  /auth/health:
+    get:
+      summary: 헬스 체크 (Gateway 경유)
+      operationId: healthCheckViaGateway
+      responses:
+        "200":
+          description: 서비스 정상
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
   /auth/register:
     post:
       tags:
@@ -136,7 +148,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /users/me:
+  /auth/users/me:
     get:
       tags:
         - users
