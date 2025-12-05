@@ -19,7 +19,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def create_access_token(user_id: UUID) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
     to_encode: dict[str, Any] = {
         "sub": str(user_id),
         "exp": expire,
@@ -29,7 +29,7 @@ def create_access_token(user_id: UUID) -> str:
 
 
 def create_refresh_token(user_id: UUID) -> str:
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_token_expire_days)
     to_encode: dict[str, Any] = {
         "sub": str(user_id),
         "exp": expire,

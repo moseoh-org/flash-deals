@@ -2,9 +2,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # Server
-    host: str = "0.0.0.0"
-    port: int = 8000
+    # App
+    app_host: str = "0.0.0.0"
+    app_port: int = 8000
+    app_debug: bool = False
 
     # Service URLs (환경변수로 주입)
     auth_service_url: str = "http://localhost:8001"
@@ -15,9 +16,6 @@ class Settings(BaseSettings):
     otel_enabled: bool = False
     otel_service_name: str = "gateway"
     otel_exporter_otlp_endpoint: str = "http://localhost:4317"
-
-    # Gateway settings
-    debug: bool = False
 
     class Config:
         env_prefix = ""
