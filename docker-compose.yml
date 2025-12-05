@@ -13,7 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./infra/app/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U flash -d flash_deals"]
       interval: 5s
@@ -69,9 +69,10 @@ services:
       AUTH_SERVICE_URL: http://auth:8001
       PRODUCT_SERVICE_URL: http://product:8002
       ORDER_SERVICE_URL: http://order:8003
-      OTEL_ENABLED: false
+      OTEL_ENABLED: true
       OTEL_SERVICE_NAME: gateway
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
@@ -86,6 +87,7 @@ services:
         condition: service_healthy
     networks:
       - flash-network
+      - monitoring-network
 
   auth:
     build:
@@ -102,9 +104,10 @@ services:
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
       JWT_REFRESH_TOKEN_EXPIRE_DAYS: 7
-      OTEL_ENABLED: false
+      OTEL_ENABLED: true
       OTEL_SERVICE_NAME: auth-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 5s
@@ -115,6 +118,7 @@ services:
         condition: service_healthy
     networks:
       - flash-network
+      - monitoring-network
 
   product:
     build:
@@ -127,9 +131,10 @@ services:
       DB_NAME: flash_deals
       DB_USER: flash
       DB_PASSWORD: flash1234
-      OTEL_ENABLED: false
+      OTEL_ENABLED: true
       OTEL_SERVICE_NAME: product-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 5s
@@ -140,6 +145,7 @@ services:
         condition: service_healthy
     networks:
       - flash-network
+      - monitoring-network
 
   order:
     build:
@@ -153,9 +159,10 @@ services:
       DB_USER: flash
       DB_PASSWORD: flash1234
       PRODUCT_SERVICE_URL: http://product:8002
-      OTEL_ENABLED: false
+      OTEL_ENABLED: true
       OTEL_SERVICE_NAME: order-service
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
       interval: 5s
@@ -168,6 +175,7 @@ services:
         condition: service_healthy
     networks:
       - flash-network
+      - monitoring-network
 
 volumes:
   postgres_data:
@@ -176,3 +184,6 @@ volumes:
 networks:
   flash-network:
     driver: bridge
+  monitoring-network:
+    name: flash-deals_monitoring-network
+    external: true
