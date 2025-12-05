@@ -50,8 +50,8 @@
 - [x] **7. Order Service (Python)**
   - [x] DB Schema/Query 작성 및 sqlc 설정
   - [x] 주문 생성 API (단순 DB Transaction)
-- [ ] **8. 통합 Makefile 완성**
-  - [ ] 빌드, 실행, 테스트 자동화 명령어
+- [x] **8. 통합 Makefile 완성**
+  - [x] 빌드, 실행, 테스트 자동화 명령어
 
 ### 📊 Phase 2: 측정 환경 구축 (The Baseline)
 
