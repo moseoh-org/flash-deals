@@ -7,7 +7,7 @@ from src.config import settings
 
 engine: AsyncEngine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,
+    echo=settings.app_debug,
     pool_pre_ping=True,
 )
 
