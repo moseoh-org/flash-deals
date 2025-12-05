@@ -41,6 +41,7 @@ async def gateway_proxy(request: Request, path: str):
         )
 
     # JWT 검증 (공개 경로가 아닌 경우)
+    user_id: str | None = None
     if not public_route_validator.is_public(full_path, request.method):
         token = extract_token(request)
         if not token:
@@ -61,10 +62,11 @@ async def gateway_proxy(request: Request, path: str):
                     "message": "유효하지 않은 토큰입니다.",
                 },
             )
+        user_id = verify_result.get("user_id")
 
     # 프록시 요청 수행
     try:
-        return await proxy_request(request, target_url)
+        return await proxy_request(request, target_url, user_id=user_id)
     except Exception as e:
         return JSONResponse(
             status_code=502,

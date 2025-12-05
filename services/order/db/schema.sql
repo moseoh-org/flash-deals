@@ -1,4 +1,4 @@
--- Order Service Schema
+-- Order Service Schema (sqlc용)
 CREATE SCHEMA IF NOT EXISTS orders;
 
 -- Order status enum

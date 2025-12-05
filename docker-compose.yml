@@ -13,6 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U flash -d flash_deals"]
       interval: 5s
@@ -81,6 +82,8 @@ services:
         condition: service_healthy
       product:
         condition: service_healthy
+      order:
+        condition: service_healthy
     networks:
       - flash-network
 
@@ -138,16 +141,33 @@ services:
     networks:
       - flash-network
 
-  # order:
-  #   build:
-  #     context: ./services/order/python
-  #   environment:
-  #     PORT: 8003
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - flash-network
+  order:
+    build:
+      context: ./services/order/python
+    container_name: flash-deals-order
+    environment:
+      APP_PORT: 8003
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: flash_deals
+      DB_USER: flash
+      DB_PASSWORD: flash1234
+      PRODUCT_SERVICE_URL: http://product:8002
+      OTEL_ENABLED: false
+      OTEL_SERVICE_NAME: order-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+      product:
+        condition: service_healthy
+    networks:
+      - flash-network
 
 volumes:
   postgres_data:

@@ -19,7 +19,7 @@ def get_target_url(path: str) -> str | None:
     return None
 
 
-async def proxy_request(request: Request, target_url: str) -> Response:
+async def proxy_request(request: Request, target_url: str, user_id: str | None = None) -> Response:
     """요청을 대상 서비스로 프록시"""
     async with httpx.AsyncClient() as client:
         # 원본 요청 정보 추출
@@ -31,6 +31,10 @@ async def proxy_request(request: Request, target_url: str) -> Response:
         headers = dict(request.headers)
         headers.pop("host", None)
         headers.pop("content-length", None)
+
+        # 인증된 사용자 ID 추가
+        if user_id:
+            headers["X-User-ID"] = user_id
 
         # 요청 본문 읽기
         body = await request.body()

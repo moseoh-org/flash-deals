@@ -82,7 +82,7 @@ async def refresh_tokens(refresh_token: str) -> TokenResponse:
     return TokenResponse(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
-        expires_in=settings.access_token_expire_minutes * 60,
+        expires_in=settings.jwt_access_token_expire_minutes * 60,
     )
 
 
