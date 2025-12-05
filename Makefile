@@ -31,30 +31,29 @@ sqlc-gen-order:
 # ===================
 # Database Migration
 # ===================
-DB_URL ?= postgres://flash:flash1234@postgres:5432/flash_deals?sslmode=disable
+DB_URL_BASE ?= postgres://flash:flash1234@postgres:5432/flash_deals?sslmode=disable
 
-migrate-up: migrate-up-auth
-# migrate-up: migrate-up-auth migrate-up-product migrate-up-order
+migrate-up: migrate-up-auth migrate-up-product migrate-up-order
 
 migrate-up-auth:
-	docker compose run --rm migrate -path=/migrations/auth -database="$(DB_URL)" up
+	docker compose run --rm migrate -path=/migrations/auth -database="$(DB_URL_BASE)&search_path=auth" up
 
 migrate-up-product:
-	docker compose run --rm migrate -path=/migrations/product -database="$(DB_URL)" up
+	docker compose run --rm migrate -path=/migrations/product -database="$(DB_URL_BASE)&search_path=product" up
 
 migrate-up-order:
-	docker compose run --rm migrate -path=/migrations/order -database="$(DB_URL)" up
+	docker compose run --rm migrate -path=/migrations/order -database="$(DB_URL_BASE)&search_path=orders" up
 
-migrate-down: migrate-down-order migrate-down-product migrate-down-auth
+migrate-down: migrate-down-auth migrate-down-product migrate-down-order
 
 migrate-down-auth:
-	docker compose run --rm migrate -path=/migrations/auth -database="$(DB_URL)" down -all
+	docker compose run --rm migrate -path=/migrations/auth -database="$(DB_URL_BASE)&search_path=auth" down -all
 
 migrate-down-product:
-	docker compose run --rm migrate -path=/migrations/product -database="$(DB_URL)" down -all
+	docker compose run --rm migrate -path=/migrations/product -database="$(DB_URL_BASE)&search_path=product" down -all
 
 migrate-down-order:
-	docker compose run --rm migrate -path=/migrations/order -database="$(DB_URL)" down -all
+	docker compose run --rm migrate -path=/migrations/order -database="$(DB_URL_BASE)&search_path=orders" down -all
 
 # ===================
 # Integration Test

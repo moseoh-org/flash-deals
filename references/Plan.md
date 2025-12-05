@@ -43,13 +43,13 @@
 - [x] **5. Gateway 고도화** - JWT 검증 추가
   - [x] JWT 검증 Middleware 구현
   - [x] 인증 필요 경로에 Middleware 적용
-- [ ] **6. Product Service (Python)**
-  - [ ] DB Schema/Query 작성 및 sqlc 설정
-  - [ ] 상품 등록 및 재고 조회 API
-  - [ ] 핫딜 API
-- [ ] **7. Order Service (Python)**
-  - [ ] DB Schema/Query 작성 및 sqlc 설정
-  - [ ] 주문 생성 API (단순 DB Transaction)
+- [x] **6. Product Service (Python)**
+  - [x] DB Schema/Query 작성 및 sqlc 설정
+  - [x] 상품 등록 및 재고 조회 API
+  - [x] 핫딜 API
+- [x] **7. Order Service (Python)**
+  - [x] DB Schema/Query 작성 및 sqlc 설정
+  - [x] 주문 생성 API (단순 DB Transaction)
 - [ ] **8. 통합 Makefile 완성**
   - [ ] 빌드, 실행, 테스트 자동화 명령어
 
