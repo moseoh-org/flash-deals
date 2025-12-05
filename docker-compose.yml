@@ -79,6 +79,8 @@ services:
     depends_on:
       auth:
         condition: service_healthy
+      product:
+        condition: service_healthy
     networks:
       - flash-network
 
@@ -107,18 +109,26 @@ services:
     networks:
       - flash-network
 
-  # product:
-  #   build:
-  #     context: ./services/product/python
-  #   environment:
-  #     PORT: 8002
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - flash-network
+  product:
+    build:
+      context: ./services/product/python
+    container_name: flash-deals-product
+    environment:
+      PORT: 8002
+      DATABASE_URL: postgresql+asyncpg://flash:flash1234@postgres:5432/flash_deals
+      OTEL_ENABLED: false
+      OTEL_SERVICE_NAME: product-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://signoz:4317
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - flash-network
 
   # order:
   #   build:
