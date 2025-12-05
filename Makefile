@@ -1,18 +1,27 @@
-.PHONY: help sqlc-gen sqlc-gen-auth sqlc-gen-product sqlc-gen-order migrate-up migrate-down test-integration test-integration-ci
+.PHONY: help up up-build down reset logs sqlc-gen sqlc-gen-auth sqlc-gen-product sqlc-gen-order migrate-up migrate-down test
 
 # ===================
 # Help
 # ===================
 help:
 	@echo "Available commands:"
+	@echo "Code Generation:"
 	@echo "  sqlc-gen          - Generate sqlc code for all services"
-	@echo "  sqlc-gen-auth     - Generate sqlc code for auth service"
-	@echo "  sqlc-gen-product  - Generate sqlc code for product service"
-	@echo "  sqlc-gen-order    - Generate sqlc code for order service"
+	@echo ""
+	@echo "Docker Compose:"
+	@echo "  up                - Start services (reuse images) + migrate"
+	@echo "  up-build          - Start services (rebuild images) + migrate"
+	@echo "  down              - Stop services"
+	@echo "  reset             - Stop services and remove volumes"
+	@echo "  logs              - Follow service logs"
+	@echo ""
+	@echo "Database:"
 	@echo "  migrate-up        - Run all migrations"
 	@echo "  migrate-down      - Rollback all migrations"
-	@echo "  test-integration  - Run integration tests (assumes services are running)"
-	@echo "  test-integration-ci - Run integration tests with full lifecycle (CI)"
+	@echo ""
+	@echo ""
+	@echo "Testing:"
+	@echo "  test              - Run integration tests"
 
 # ===================
 # sqlc Code Generation
@@ -56,15 +65,28 @@ migrate-down-order:
 	docker compose run --rm migrate -path=/migrations/order -database="$(DB_URL_BASE)&search_path=orders" down -all
 
 # ===================
-# Integration Test
+# Docker Compose
 # ===================
-test-integration:
-	@test -d tests/integration/.venv || (cd tests/integration && uv sync)
-	cd tests/integration && uv run pytest -v
-
-test-integration-ci:
+up:
 	docker compose up -d --wait
 	$(MAKE) migrate-up
+
+up-build:
+	docker compose up -d --build --wait
+	$(MAKE) migrate-up
+
+down:
+	docker compose down
+
+reset:
+	docker compose down -v
+
+logs:
+	docker compose logs -f
+
+# ===================
+# Integration Test
+# ===================
+test:
 	@test -d tests/integration/.venv || (cd tests/integration && uv sync)
 	cd tests/integration && uv run pytest -v
-	docker compose down

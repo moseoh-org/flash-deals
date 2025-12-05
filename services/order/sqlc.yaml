@@ -12,6 +12,6 @@ sql:
       - out: "python/src/generated"
         plugin: py
         options:
-          package: "generated"
+          package: "src.generated"
           emit_sync_querier: false
           emit_async_querier: true
