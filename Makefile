@@ -111,3 +111,38 @@ migrate-down-order:
 test:
 	@test -d tests/integration/.venv || (cd tests/integration && uv sync)
 	cd tests/integration && uv run pytest -v
+
+# ===================
+# Load Test (k6)
+# ===================
+K6_SCRIPT ?= product-insert
+K6_PRODUCTS ?= 1000
+
+load:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env TOTAL_PRODUCTS=$(K6_PRODUCTS) \
+		tests/load/scripts/$(K6_SCRIPT).js
+
+load-1k:
+	$(MAKE) load K6_PRODUCTS=1000
+
+load-5k:
+	$(MAKE) load K6_PRODUCTS=5000
+
+load-10k:
+	$(MAKE) load K6_PRODUCTS=10000
+
+# ===================
+# Load Test Seeds
+# ===================
+seed-products:
+	@echo "Seeding 1,000,000 products (this may take a few minutes)..."
+	docker compose exec -T postgres psql -U flash -d flash_deals -f /dev/stdin < tests/load/seeds/product-seed.sql
+
+seed-products-10m:
+	@echo "Seeding 10,000,000 products (this may take 10-20 minutes)..."
+	docker compose exec -T postgres psql -U flash -d flash_deals -f /dev/stdin < tests/load/seeds/product-seed-10m.sql
+
+seed-products-clean:
+	@echo "Truncating products table..."
+	docker compose exec postgres psql -U flash -d flash_deals -c "TRUNCATE product.products CASCADE;"
