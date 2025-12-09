@@ -335,25 +335,29 @@
 
 ## 5. 성능 테스트 시나리오 (k6 Scripts)
 
-> `tests/load/scripts/` 디렉토리에 추가 예정
+> `tests/load/scripts/` 디렉토리
 
-### 기존 스크립트 (완료)
-- [x] `health-check.js` - 서비스 헬스체크
-- [x] `auth-flow.js` - 회원가입→로그인→내정보→토큰갱신
-- [x] `order-scenario.js` - 전체 주문 플로우
+### 시나리오별 테스트 스크립트
 
-### 추가 예정 스크립트
-```
-tests/load/scripts/
-├── scenarios/
-│   ├── product-insert.js      # E1: 대량 상품 INSERT
-│   ├── product-list.js        # E2,E6,E7: 상품 목록 조회 부하
-│   ├── deal-list.js           # E3: 핫딜 목록 조회 부하
-│   ├── order-list.js          # E4: 주문 목록 N+1 테스트
-│   ├── concurrent-order.js    # M1: 동시 주문 (재고 동시성)
-│   └── gateway-throughput.js  # H5: Gateway 최대 처리량
-└── config.js
-```
+| 완료 | 시나리오 | 스크립트 | 타겟 개선사항 |
+|:----:|----------|----------|---------------|
+| | [상품 목록 조회가 느림](../docs/scenarios/product-list-slow.md) | `product-list.js` | E2, E6, E7 |
+| ✅ | [상품 대량 등록이 느림](../docs/scenarios/product-insert-slow.md) | `product-insert.js` | E1 |
+| | [주문 목록 조회가 느림](../docs/scenarios/order-list-slow.md) | `order-list.js` | E4, M3 |
+| | [핫딜 트래픽 급증](../docs/scenarios/deal-traffic-spike.md) | `deal-spike.js` | E3, M4 |
+| | [동시 주문 재고 초과](../docs/scenarios/concurrent-order-oversell.md) | `concurrent-order.js` | M1 |
+| | [DB 커넥션 풀 고갈](../docs/scenarios/connection-pool-exhausted.md) | `connection-stress.js` | E5 |
+| | [서비스 장애 연쇄 전파](../docs/scenarios/service-cascade-failure.md) | `service-failure.js` | M5 |
+| | [인증 CPU 병목](../docs/scenarios/auth-cpu-bottleneck.md) | `auth-stress.js` | M2, H3 |
+| | [주문 처리량 한계](../docs/scenarios/order-tps-limit.md) | `order-stress.js` | H1, H2, H4 |
+| | [Gateway 처리량 한계](../docs/scenarios/gateway-throughput-limit.md) | `gateway-throughput.js` | H5 |
+
+### 기존 스크립트
+| 스크립트 | 용도 |
+|----------|------|
+| `health-check.js` | 서비스 헬스체크 |
+| `auth-flow.js` | 회원가입→로그인→내정보→토큰갱신 |
+| `order-scenario.js` | 전체 주문 플로우 |
 
 ### 측정 지표
 - **Throughput (TPS)**: 초당 처리량
