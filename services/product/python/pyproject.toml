@@ -12,6 +12,8 @@ dependencies = [
     # Database
     "sqlalchemy[asyncio]>=2.0.0",
     "asyncpg>=0.30.0",
+    # Cache
+    "redis>=7.0.0",
     # OpenTelemetry
     "opentelemetry-api>=1.28.0",
     "opentelemetry-sdk>=1.28.0",

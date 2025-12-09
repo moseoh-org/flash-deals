@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from src.database import get_connection
+from src.config import settings
+from src.database import get_connection, get_redis
 from src.generated.query import (
     AsyncQuerier,
     CreateDealParams,
@@ -10,12 +11,32 @@ from src.generated.query import (
     ListActiveDealsRow,
     UpdateProductParams,
 )
+from src.repository.base import ProductRepository
+from src.repository.cached import CachedProductRepository
+from src.repository.rdb import RdbProductRepository
 from src.schemas import (
     DealResponse,
     DealStatus,
     ProductResponse,
     StockResponse,
 )
+
+# Repository 인스턴스 (lazy initialization)
+_repository: ProductRepository | None = None
+
+
+async def get_repository() -> ProductRepository:
+    global _repository
+    if _repository is None:
+        rdb_repo = RdbProductRepository()
+        if settings.enable_cache:
+            redis = await get_redis()
+            _repository = CachedProductRepository(
+                inner=rdb_repo, redis=redis, ttl=settings.cache_ttl
+            )
+        else:
+            _repository = rdb_repo
+    return _repository
 
 
 class ProductServiceError(Exception):
@@ -104,77 +125,20 @@ async def create_product(
 
 
 async def get_product(product_id: UUID) -> ProductResponse:
-    async with get_connection() as conn:
-        querier = AsyncQuerier(conn)
-        product = await querier.get_product_by_id(id=product_id)
+    repository = await get_repository()
+    product = await repository.get_product(product_id)
 
-        if product is None:
-            raise ProductServiceError("NOT_FOUND", "상품을 찾을 수 없습니다.", 404)
+    if product is None:
+        raise ProductServiceError("NOT_FOUND", "상품을 찾을 수 없습니다.", 404)
 
-        return ProductResponse(
-            id=product.id,
-            name=product.name,
-            description=product.description,
-            price=product.price,
-            stock=product.stock,
-            category=product.category,
-            image_url=product.image_url,
-            created_at=product.created_at,
-            updated_at=product.updated_at,
-        )
+    return product
 
 
 async def list_products(
     page: int = 1, size: int = 20, category: str | None = None
 ) -> tuple[list[ProductResponse], int]:
-    offset = (page - 1) * size
-    async with get_connection() as conn:
-        querier = AsyncQuerier(conn)
-
-        # Count query
-        if category:
-            total = await querier.count_products_by_category(category=category)
-        else:
-            total = await querier.count_products()
-
-        total = total or 0
-
-        # List query
-        items = []
-        if category:
-            async for product in querier.list_products_by_category(
-                category=category, limit=size, offset=offset
-            ):
-                items.append(
-                    ProductResponse(
-                        id=product.id,
-                        name=product.name,
-                        description=product.description,
-                        price=product.price,
-                        stock=product.stock,
-                        category=product.category,
-                        image_url=product.image_url,
-                        created_at=product.created_at,
-                        updated_at=product.updated_at,
-                    )
-                )
-        else:
-            async for product in querier.list_products(limit=size, offset=offset):
-                items.append(
-                    ProductResponse(
-                        id=product.id,
-                        name=product.name,
-                        description=product.description,
-                        price=product.price,
-                        stock=product.stock,
-                        category=product.category,
-                        image_url=product.image_url,
-                        created_at=product.created_at,
-                        updated_at=product.updated_at,
-                    )
-                )
-
-        return items, total
+    repository = await get_repository()
+    return await repository.list_products(page, size, category)
 
 
 async def update_product(

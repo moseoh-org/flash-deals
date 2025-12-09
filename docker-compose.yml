@@ -74,7 +74,13 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -109,7 +115,13 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -131,17 +143,31 @@ services:
       DB_NAME: flash_deals
       DB_USER: flash
       DB_PASSWORD: flash1234
+      # Cache
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      ENABLE_CACHE: ${ENABLE_CACHE:-true}
+      CACHE_TTL: 60
+      # OpenTelemetry
       OTEL_ENABLED: true
       OTEL_SERVICE_NAME: product-service
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - flash-network
@@ -164,7 +190,13 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SEMCONV_STABILITY_OPT_IN: http
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8003/health')",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5

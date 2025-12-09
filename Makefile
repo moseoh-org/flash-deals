@@ -132,6 +132,13 @@ load-5k:
 load-10k:
 	$(MAKE) load K6_PRODUCTS=10000
 
+# 상품 목록 조회 부하 테스트
+load-list:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env DURATION=$(or $(DURATION),30s) \
+		--env VUS=$(or $(VUS),10) \
+		tests/load/scripts/product-list.js
+
 # ===================
 # Load Test Seeds
 # ===================
