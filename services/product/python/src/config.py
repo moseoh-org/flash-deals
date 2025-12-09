@@ -18,6 +18,19 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
+    # Redis
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+
+    @property
+    def redis_url(self) -> str:
+        return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+
+    # Cache
+    enable_cache: bool = False
+    cache_ttl: int = 60
+
     # OpenTelemetry
     otel_enabled: bool = False
     otel_service_name: str = "product-service"
