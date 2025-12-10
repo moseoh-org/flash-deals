@@ -1,0 +1,47 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  # ===================
+  # Auth Service
+  # ===================
+  - name: auth-service
+    url: http://auth:8001
+    routes:
+      - name: auth-routes
+        paths:
+          - /auth
+        strip_path: false
+
+  # ===================
+  # Product Service
+  # ===================
+  - name: product-service
+    url: http://product:8002
+    routes:
+      - name: product-routes
+        paths:
+          - /products
+        strip_path: false
+
+  # ===================
+  # Order Service
+  # ===================
+  - name: order-service
+    url: http://order:8003
+    routes:
+      - name: order-routes
+        paths:
+          - /orders
+        strip_path: false
+
+plugins:
+  # ===================
+  # Global Plugins
+  # ===================
+  - name: opentelemetry
+    config:
+      endpoint: http://otel-collector:4318/v1/traces
+      resource_attributes:
+        service.name: kong-gateway
+      header_type: w3c

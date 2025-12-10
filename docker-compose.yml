@@ -59,28 +59,24 @@ services:
   # Services
   # ===================
   gateway:
-    build:
-      context: ./services/gateway/python
+    image: kong:3.9
     container_name: flash-deals-gateway
     ports:
       - "8000:8000"
+      - "8001:8001"
     environment:
-      APP_PORT: 8000
-      AUTH_SERVICE_URL: http://auth:8001
-      PRODUCT_SERVICE_URL: http://product:8002
-      ORDER_SERVICE_URL: http://order:8003
-      OTEL_ENABLED: true
-      OTEL_SERVICE_NAME: gateway
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      OTEL_SEMCONV_STABILITY_OPT_IN: http
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PLUGINS: bundled,opentelemetry
+      KONG_OPENTELEMETRY_TRACING: all
+      KONG_TRACING_INSTRUMENTATIONS: all
+      KONG_TRACING_SAMPLING_RATE: "1.0"
+    volumes:
+      - ./infra/app/gateway/kong.yml:/etc/kong/kong.yml:ro
     healthcheck:
-      test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
-        ]
+      test: ["CMD", "kong", "health"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -94,6 +90,44 @@ services:
     networks:
       - flash-network
       - monitoring-network
+
+  # Python Gateway (비활성화 - Kong으로 대체)
+  # gateway-python:
+  #   build:
+  #     context: ./services/gateway/python
+  #   container_name: flash-deals-gateway-python
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     APP_PORT: 8000
+  #     AUTH_SERVICE_URL: http://auth:8001
+  #     PRODUCT_SERVICE_URL: http://product:8002
+  #     ORDER_SERVICE_URL: http://order:8003
+  #     OTEL_ENABLED: true
+  #     OTEL_SERVICE_NAME: gateway
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  #     OTEL_SEMCONV_STABILITY_OPT_IN: http
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD",
+  #         "python",
+  #         "-c",
+  #         "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+  #       ]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   depends_on:
+  #     auth:
+  #       condition: service_healthy
+  #     product:
+  #       condition: service_healthy
+  #     order:
+  #       condition: service_healthy
+  #   networks:
+  #     - flash-network
+  #     - monitoring-network
 
   auth:
     build:
