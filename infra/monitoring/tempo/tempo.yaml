@@ -15,6 +15,9 @@ ingester:
   max_block_bytes: 1_000_000
   max_block_duration: 5m
 
+overrides:
+  max_traces_per_user: 100000
+
 compactor:
   compaction:
     compaction_window: 1h

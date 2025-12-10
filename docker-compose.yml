@@ -144,6 +144,7 @@ services:
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
       JWT_REFRESH_TOKEN_EXPIRE_DAYS: 7
+      JWT_SKIP_VERIFICATION: true  # Kong JWT 플러그인이 검증하므로 스킵
       OTEL_ENABLED: true
       OTEL_SERVICE_NAME: auth-service
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317

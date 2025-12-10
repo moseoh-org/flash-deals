@@ -24,6 +24,7 @@ def create_access_token(user_id: UUID) -> str:
         "sub": str(user_id),
         "exp": expire,
         "type": "access",
+        "iss": "flash-deals",
     }
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
@@ -34,13 +35,23 @@ def create_refresh_token(user_id: UUID) -> str:
         "sub": str(user_id),
         "exp": expire,
         "type": "refresh",
+        "iss": "flash-deals",
     }
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
 def decode_token(token: str) -> dict[str, Any] | None:
     try:
-        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        if settings.jwt_skip_verification:
+            # Kong이 이미 검증했으므로 decode만 수행 (서명 검증 스킵)
+            payload = jwt.decode(
+                token,
+                settings.jwt_secret_key,
+                algorithms=[settings.jwt_algorithm],
+                options={"verify_signature": False},
+            )
+        else:
+            payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         return payload
     except JWTError:
         return None

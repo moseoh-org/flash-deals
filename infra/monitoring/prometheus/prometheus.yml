@@ -16,3 +16,17 @@ scrape_configs:
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+
+  # Kong Gateway metrics
+  - job_name: 'flash-deals/gateway'
+    static_configs:
+      - targets: ['gateway:8001']
+    metrics_path: /metrics
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'kong_(.*)'
+        action: keep
+      - target_label: service_name
+        replacement: gateway
+      - target_label: service_namespace
+        replacement: flash-deals

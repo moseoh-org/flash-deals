@@ -11,6 +11,21 @@ processors:
     send_batch_size: 10000
     timeout: 10s
 
+connectors:
+  # Traces -> Metrics 변환 (Kong 등 traces만 보내는 서비스용)
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2.5s, 5s, 10s]
+    dimensions:
+      - name: http.method
+        default: GET
+      - name: http.status_code
+      - name: http.route
+    dimensions_cache_size: 1000
+    aggregation_temporality: "AGGREGATION_TEMPORALITY_CUMULATIVE"
+    metrics_flush_interval: 15s
+
 exporters:
   # Traces -> Tempo
   otlp/tempo:
@@ -34,8 +49,8 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp/tempo]
+      exporters: [spanmetrics, otlp/tempo]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, spanmetrics]
       processors: [batch]
       exporters: [otlphttp/prometheus]
