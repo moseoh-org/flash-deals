@@ -3,6 +3,7 @@
 #   sqlc v1.30.0
 # source: query.sql
 import dataclasses
+import datetime
 from typing import Any, AsyncIterator, Optional
 import uuid
 
@@ -111,6 +112,118 @@ WHERE user_id = :p1 AND status = :p2
 ORDER BY created_at DESC
 LIMIT :p3 OFFSET :p4
 """
+
+
+LIST_ORDERS_WITH_ITEMS_BY_USER_ID = """-- name: list_orders_with_items_by_user_id \\:many
+SELECT
+    o.id AS o_id,
+    o.user_id AS o_user_id,
+    o.total_amount AS o_total_amount,
+    o.status AS o_status,
+    o.recipient_name AS o_recipient_name,
+    o.phone AS o_phone,
+    o.address AS o_address,
+    o.address_detail AS o_address_detail,
+    o.postal_code AS o_postal_code,
+    o.cancelled_at AS o_cancelled_at,
+    o.cancel_reason AS o_cancel_reason,
+    o.created_at AS o_created_at,
+    o.updated_at AS o_updated_at,
+    i.id AS i_id,
+    i.product_id AS i_product_id,
+    i.deal_id AS i_deal_id,
+    i.product_name AS i_product_name,
+    i.quantity AS i_quantity,
+    i.unit_price AS i_unit_price,
+    i.subtotal AS i_subtotal,
+    i.created_at AS i_created_at
+FROM orders.orders o
+LEFT JOIN orders.order_items i ON o.id = i.order_id
+WHERE o.user_id = :p1
+ORDER BY o.created_at DESC, i.created_at
+LIMIT :p2 OFFSET :p3
+"""
+
+
+@dataclasses.dataclass()
+class ListOrdersWithItemsByUserIDRow:
+    o_id: uuid.UUID
+    o_user_id: uuid.UUID
+    o_total_amount: int
+    o_status: Any
+    o_recipient_name: Optional[str]
+    o_phone: Optional[str]
+    o_address: Optional[str]
+    o_address_detail: Optional[str]
+    o_postal_code: Optional[str]
+    o_cancelled_at: Optional[datetime.datetime]
+    o_cancel_reason: Optional[str]
+    o_created_at: datetime.datetime
+    o_updated_at: datetime.datetime
+    i_id: Optional[uuid.UUID]
+    i_product_id: Optional[uuid.UUID]
+    i_deal_id: Optional[uuid.UUID]
+    i_product_name: Optional[str]
+    i_quantity: Optional[int]
+    i_unit_price: Optional[int]
+    i_subtotal: Optional[int]
+    i_created_at: Optional[datetime.datetime]
+
+
+LIST_ORDERS_WITH_ITEMS_BY_USER_ID_AND_STATUS = """-- name: list_orders_with_items_by_user_id_and_status \\:many
+SELECT
+    o.id AS o_id,
+    o.user_id AS o_user_id,
+    o.total_amount AS o_total_amount,
+    o.status AS o_status,
+    o.recipient_name AS o_recipient_name,
+    o.phone AS o_phone,
+    o.address AS o_address,
+    o.address_detail AS o_address_detail,
+    o.postal_code AS o_postal_code,
+    o.cancelled_at AS o_cancelled_at,
+    o.cancel_reason AS o_cancel_reason,
+    o.created_at AS o_created_at,
+    o.updated_at AS o_updated_at,
+    i.id AS i_id,
+    i.product_id AS i_product_id,
+    i.deal_id AS i_deal_id,
+    i.product_name AS i_product_name,
+    i.quantity AS i_quantity,
+    i.unit_price AS i_unit_price,
+    i.subtotal AS i_subtotal,
+    i.created_at AS i_created_at
+FROM orders.orders o
+LEFT JOIN orders.order_items i ON o.id = i.order_id
+WHERE o.user_id = :p1 AND o.status = :p2
+ORDER BY o.created_at DESC, i.created_at
+LIMIT :p3 OFFSET :p4
+"""
+
+
+@dataclasses.dataclass()
+class ListOrdersWithItemsByUserIDAndStatusRow:
+    o_id: uuid.UUID
+    o_user_id: uuid.UUID
+    o_total_amount: int
+    o_status: Any
+    o_recipient_name: Optional[str]
+    o_phone: Optional[str]
+    o_address: Optional[str]
+    o_address_detail: Optional[str]
+    o_postal_code: Optional[str]
+    o_cancelled_at: Optional[datetime.datetime]
+    o_cancel_reason: Optional[str]
+    o_created_at: datetime.datetime
+    o_updated_at: datetime.datetime
+    i_id: Optional[uuid.UUID]
+    i_product_id: Optional[uuid.UUID]
+    i_deal_id: Optional[uuid.UUID]
+    i_product_name: Optional[str]
+    i_quantity: Optional[int]
+    i_unit_price: Optional[int]
+    i_subtotal: Optional[int]
+    i_created_at: Optional[datetime.datetime]
 
 
 UPDATE_ORDER_STATUS = """-- name: update_order_status \\:one
@@ -296,6 +409,65 @@ class AsyncQuerier:
                 cancel_reason=row[10],
                 created_at=row[11],
                 updated_at=row[12],
+            )
+
+    async def list_orders_with_items_by_user_id(self, *, user_id: uuid.UUID, limit: int, offset: int) -> AsyncIterator[ListOrdersWithItemsByUserIDRow]:
+        result = await self._conn.stream(sqlalchemy.text(LIST_ORDERS_WITH_ITEMS_BY_USER_ID), {"p1": user_id, "p2": limit, "p3": offset})
+        async for row in result:
+            yield ListOrdersWithItemsByUserIDRow(
+                o_id=row[0],
+                o_user_id=row[1],
+                o_total_amount=row[2],
+                o_status=row[3],
+                o_recipient_name=row[4],
+                o_phone=row[5],
+                o_address=row[6],
+                o_address_detail=row[7],
+                o_postal_code=row[8],
+                o_cancelled_at=row[9],
+                o_cancel_reason=row[10],
+                o_created_at=row[11],
+                o_updated_at=row[12],
+                i_id=row[13],
+                i_product_id=row[14],
+                i_deal_id=row[15],
+                i_product_name=row[16],
+                i_quantity=row[17],
+                i_unit_price=row[18],
+                i_subtotal=row[19],
+                i_created_at=row[20],
+            )
+
+    async def list_orders_with_items_by_user_id_and_status(self, *, user_id: uuid.UUID, status: Any, limit: int, offset: int) -> AsyncIterator[ListOrdersWithItemsByUserIDAndStatusRow]:
+        result = await self._conn.stream(sqlalchemy.text(LIST_ORDERS_WITH_ITEMS_BY_USER_ID_AND_STATUS), {
+            "p1": user_id,
+            "p2": status,
+            "p3": limit,
+            "p4": offset,
+        })
+        async for row in result:
+            yield ListOrdersWithItemsByUserIDAndStatusRow(
+                o_id=row[0],
+                o_user_id=row[1],
+                o_total_amount=row[2],
+                o_status=row[3],
+                o_recipient_name=row[4],
+                o_phone=row[5],
+                o_address=row[6],
+                o_address_detail=row[7],
+                o_postal_code=row[8],
+                o_cancelled_at=row[9],
+                o_cancel_reason=row[10],
+                o_created_at=row[11],
+                o_updated_at=row[12],
+                i_id=row[13],
+                i_product_id=row[14],
+                i_deal_id=row[15],
+                i_product_name=row[16],
+                i_quantity=row[17],
+                i_unit_price=row[18],
+                i_subtotal=row[19],
+                i_created_at=row[20],
             )
 
     async def update_order_status(self, *, id: uuid.UUID, status: Any) -> Optional[models.OrdersOrder]:

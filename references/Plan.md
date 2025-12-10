@@ -341,9 +341,9 @@
 
 | 완료 | 시나리오 | 스크립트 | 타겟 개선사항 |
 |:----:|----------|----------|---------------|
-| | [상품 목록 조회가 느림](../docs/scenarios/product-list-slow.md) | `product-list.js` | E2, E6, E7 |
+| ✅ | [상품 목록 조회가 느림](../docs/scenarios/product-list-slow.md) | `product-list.js` | E2, E6, E7 |
 | ✅ | [상품 대량 등록이 느림](../docs/scenarios/product-insert-slow.md) | `product-insert.js` | E1 |
-| | [주문 목록 조회가 느림](../docs/scenarios/order-list-slow.md) | `order-list.js` | E4, M3 |
+| ✅ | [주문 목록 조회가 느림](../docs/scenarios/order-list-slow.md) | `order-list.js` | E4, M3 |
 | | [핫딜 트래픽 급증](../docs/scenarios/deal-traffic-spike.md) | `deal-spike.js` | E3, M4 |
 | | [동시 주문 재고 초과](../docs/scenarios/concurrent-order-oversell.md) | `concurrent-order.js` | M1 |
 | | [DB 커넥션 풀 고갈](../docs/scenarios/connection-pool-exhausted.md) | `connection-stress.js` | E5 |

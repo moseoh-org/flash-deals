@@ -139,6 +139,14 @@ load-list:
 		--env VUS=$(or $(VUS),10) \
 		tests/load/scripts/product-list.js
 
+# 주문 목록 조회 부하 테스트
+load-order-list:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env DURATION=$(or $(DURATION),30s) \
+		--env VUS=$(or $(VUS),10) \
+		--env ORDERS_PER_USER=$(or $(ORDERS),50) \
+		tests/load/scripts/order-list.js
+
 # ===================
 # Load Test Seeds
 # ===================
