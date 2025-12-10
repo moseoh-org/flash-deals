@@ -147,6 +147,14 @@ load-order-list:
 		--env ORDERS_PER_USER=$(or $(ORDERS),50) \
 		tests/load/scripts/order-list.js
 
+# 핫딜 트래픽 급증 테스트
+load-deal-spike:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env MAX_VUS=$(or $(MAX_VUS),100) \
+		--env RAMP_DURATION=$(or $(RAMP_DURATION),30s) \
+		--env HOLD_DURATION=$(or $(HOLD_DURATION),30s) \
+		tests/load/scripts/deal-spike.js
+
 # ===================
 # Load Test Seeds
 # ===================

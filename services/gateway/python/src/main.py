@@ -1,14 +1,26 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from src.auth import extract_token, public_route_validator, verify_token
+from src.http_client import close_http_client
 from src.proxy import get_target_url, proxy_request
 from src.telemetry import setup_telemetry
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    yield
+    # Shutdown
+    await close_http_client()
 
 app = FastAPI(
     title="Flash Deals API Gateway",
     description="API Gateway for Flash Deals MSA",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # OpenTelemetry 설정

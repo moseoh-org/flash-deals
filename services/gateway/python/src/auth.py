@@ -1,8 +1,8 @@
-import httpx
 from fastapi import Request
 from starlette.routing import Match, Route, Router
 
 from src.config import settings
+from src.http_client import http_client
 
 
 class PublicRouteValidator:
@@ -54,15 +54,14 @@ def extract_token(request: Request) -> str | None:
 
 async def verify_token(token: str) -> dict | None:
     """Auth Service를 통해 토큰 검증"""
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(
-                f"{settings.auth_service_url}/auth/verify",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=5.0,
-            )
-            if response.status_code == 200:
-                return response.json()
-            return None
-        except Exception:
-            return None
+    try:
+        response = await http_client.get(
+            f"{settings.auth_service_url}/auth/verify",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5.0,
+        )
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except Exception:
+        return None
