@@ -28,9 +28,14 @@
 | 1차  | httpx 커넥션 풀 재사용           | 295ms (3.7배↓) | 498 req/s (3.7배↑)  |
 | 2차  | Kong Gateway 도입                | 129ms (8.4배↓) | 982 req/s (7.4배↑)  |
 
-### (예정) [서비스 장애 연쇄 전파](docs/scenarios/service-cascade-failure.md)
+### [인증 CPU 병목](docs/scenarios/auth-cpu-bottleneck.md)
 
-### (예정) [인증 CPU 병목](docs/scenarios/auth-cpu-bottleneck.md)
+| 개선 | 내용                    | p95 응답시간   | 처리량                |
+| ---- | ----------------------- | -------------- | --------------------- |
+| 기존 | Auth 서비스 직접 호출   | 235ms          | 900 req/s             |
+| 1차  | Kong JWT + Proxy Cache  | 20ms (11.8배↓) | 11,337 req/s (12.6배↑) |
+
+### (예정) [서비스 장애 연쇄 전파](docs/scenarios/service-cascade-failure.md)
 
 ## Documentation
 

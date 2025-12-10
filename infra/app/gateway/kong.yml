@@ -2,6 +2,16 @@ _format_version: "3.0"
 _transform: true
 
 # ===================
+# Consumers & JWT Credentials
+# ===================
+consumers:
+  - username: flash-deals-api
+    jwt_secrets:
+      - key: flash-deals
+        secret: your-secret-key-change-in-production
+        algorithm: HS256
+
+# ===================
 # Services
 # ===================
 services:
@@ -11,9 +21,19 @@ services:
   - name: auth-service
     url: http://auth:8001
     routes:
-      - name: auth-routes
+      # Public routes (인증 불필요)
+      - name: auth-public-routes
         paths:
-          - /auth
+          - /auth/register
+          - /auth/login
+          - /auth/refresh
+          - /auth/health
+        strip_path: false
+      # Protected routes (JWT 검증 필요)
+      - name: auth-protected-routes
+        paths:
+          - /auth/users
+          - /auth/verify
         strip_path: false
 
   # ===================
@@ -39,6 +59,28 @@ services:
         strip_path: false
 
 plugins:
+  # ===================
+  # JWT Plugin (Protected Routes)
+  # ===================
+  - name: jwt
+    route: auth-protected-routes
+    config:
+      claims_to_verify:
+        - exp
+
+  # ===================
+  # Proxy Cache (Protected Routes)
+  # ===================
+  - name: proxy-cache
+    route: auth-protected-routes
+    config:
+      strategy: memory
+      content_type:
+        - application/json
+      cache_ttl: 300  # 5분 캐싱
+      vary_headers:
+        - Authorization  # JWT별로 캐싱 (사용자별 분리)
+
   # ===================
   # Global Plugins
   # ===================

@@ -162,6 +162,14 @@ load-concurrent-order:
 		--env INITIAL_STOCK=$(or $(INITIAL_STOCK),10) \
 		tests/load/scripts/concurrent-order.js
 
+# 인증 CPU 병목 테스트
+load-auth-stress:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env MAX_VUS=$(or $(MAX_VUS),100) \
+		--env RAMP_DURATION=$(or $(RAMP_DURATION),30s) \
+		--env HOLD_DURATION=$(or $(HOLD_DURATION),30s) \
+		tests/load/scripts/auth-stress.js
+
 # ===================
 # Load Test Seeds
 # ===================

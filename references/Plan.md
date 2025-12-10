@@ -219,14 +219,14 @@
 
 #### ~~M1. 동시 주문 락 최적화 (FOR UPDATE → Redlock)~~ ❌ 불필요
 
-| 항목          | 내용                                                                    |
-| ------------- | ----------------------------------------------------------------------- |
-| **문제 발견** | 인기 핫딜 동시 주문 시 **DB 락 대기로 응답시간 지연**                   |
-| **증상**      | 100명 동시 주문 시 p95 응답시간 1200ms+, 락 직렬화로 인한 병목          |
-| **원인 분석** | `FOR UPDATE`는 DB 레벨 락으로 트랜잭션 전체 시간 동안 다른 요청 대기    |
-| **해결책**    | Redis 분산 락 (Redlock)으로 애플리케이션 레벨 락 전환, 락 범위 최소화   |
-| **측정 방법** | 100명 동시 주문 시 p95 응답시간, 평균 응답시간 비교                     |
-| **k6 테스트** | `concurrent-order.js` - 동시 주문 응답시간 테스트                       |
+| 항목          | 내용                                                                                                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **문제 발견** | 인기 핫딜 동시 주문 시 **DB 락 대기로 응답시간 지연**                                                                                                                                                         |
+| **증상**      | 100명 동시 주문 시 p95 응답시간 1200ms+, 락 직렬화로 인한 병목                                                                                                                                                |
+| **원인 분석** | `FOR UPDATE`는 DB 레벨 락으로 트랜잭션 전체 시간 동안 다른 요청 대기                                                                                                                                          |
+| **해결책**    | Redis 분산 락 (Redlock)으로 애플리케이션 레벨 락 전환, 락 범위 최소화                                                                                                                                         |
+| **측정 방법** | 100명 동시 주문 시 p95 응답시간, 평균 응답시간 비교                                                                                                                                                           |
+| **k6 테스트** | `concurrent-order.js` - 동시 주문 응답시간 테스트                                                                                                                                                             |
 | **결론**      | ❌ **개선 불필요** - 단일 DB 환경에서 `FOR UPDATE`가 이미 동시성을 안전하게 처리. Redlock은 락 획득 실패 시 "재고 부족"이 아닌 "나중에 재시도" 응답을 줘야 하므로 UX 저하. 다중 DB 샤딩 환경에서만 의미 있음. |
 
 #### M2. JWT 검증 캐싱
@@ -275,14 +275,14 @@
 
 #### M6. Kong JWT 플러그인 (Gateway 인증)
 
-| 항목          | 내용                                                                   |
-| ------------- | ---------------------------------------------------------------------- |
-| **문제 발견** | Protected route 접근 시 **매번 Auth 서비스 호출**로 Auth CPU 병목      |
-| **증상**      | Auth 서비스 CPU 80%+ 도달, 인증 요청 응답시간 증가                     |
-| **원인 분석** | Gateway가 JWT 검증을 Auth 서비스에 위임 (`/auth/verify` HTTP 호출)     |
-| **해결책**    | Kong JWT 플러그인으로 Gateway에서 직접 JWT 서명 검증                   |
-| **측정 방법** | 100% Protected route 부하 테스트 시 Auth CPU 사용률 비교               |
-| **k6 테스트** | `auth-stress.js` - Protected route 집중 호출                           |
+| 항목          | 내용                                                               |
+| ------------- | ------------------------------------------------------------------ |
+| **문제 발견** | Protected route 접근 시 **Auth 서비스 CPU 병목** 발생              |
+| **증상**      | Auth 서비스 CPU 105% 도달, p95 응답시간 235ms                      |
+| **원인 분석** | 모든 인증 요청이 Auth 서비스로 집중                                |
+| **해결책**    | Kong JWT 플러그인 (Gateway에서 JWT 검증) + Proxy Cache (응답 캐싱) |
+| **측정 방법** | 100 VU로 Protected route 부하 테스트                               |
+| **k6 테스트** | `auth-stress.js` - Protected route 집중 호출                       |
 
 ---
 
@@ -351,16 +351,16 @@
 
 ### 시나리오별 테스트 스크립트
 
-| 완료 | 시나리오                                                              | 스크립트              | 타겟 개선사항                         |
-| :--: | --------------------------------------------------------------------- | --------------------- | ------------------------------------- |
-|  ✅  | [상품 목록 조회가 느림](../docs/scenarios/product-list-slow.md)       | `product-list.js`     | E2, E6(로컬 효과 없음), E7(E2에 포함) |
-|  ✅  | [상품 대량 등록이 느림](../docs/scenarios/product-insert-slow.md)     | `product-insert.js`   | E1(유의미한 차이 없음)                |
-|  ✅  | [주문 목록 조회가 느림](../docs/scenarios/order-list-slow.md)         | `order-list.js`       | E4, M3(이미 인덱스 적용됨)            |
-|  ✅  | [핫딜 트래픽 급증](../docs/scenarios/deal-traffic-spike.md)           | `deal-spike.js`       | E5, H5                                |
-|  ❌  | ~~동시 주문 락 지연~~ | ~~`concurrent-order.js`~~ | ~~M1~~ (FOR UPDATE로 충분, Redlock 불필요) |
-|      | [서비스 장애 연쇄 전파](../docs/scenarios/service-cascade-failure.md) | `service-failure.js`  | M5                                    |
-|      | [인증 CPU 병목](../docs/scenarios/auth-cpu-bottleneck.md)             | `auth-stress.js`      | M2, M6, H3                            |
-|      | [주문 처리량 한계](../docs/scenarios/order-tps-limit.md)              | `order-stress.js`     | H1, H2, H4                            |
+| 완료 | 시나리오                                                              | 스크립트                  | 타겟 개선사항                              |
+| :--: | --------------------------------------------------------------------- | ------------------------- | ------------------------------------------ |
+|  ✅  | [상품 목록 조회가 느림](../docs/scenarios/product-list-slow.md)       | `product-list.js`         | E2, E6(로컬 효과 없음), E7(E2에 포함)      |
+|  ✅  | [상품 대량 등록이 느림](../docs/scenarios/product-insert-slow.md)     | `product-insert.js`       | E1(유의미한 차이 없음)                     |
+|  ✅  | [주문 목록 조회가 느림](../docs/scenarios/order-list-slow.md)         | `order-list.js`           | E4, M3(이미 인덱스 적용됨)                 |
+|  ✅  | [핫딜 트래픽 급증](../docs/scenarios/deal-traffic-spike.md)           | `deal-spike.js`           | E5, H5                                     |
+|  ❌  | ~~동시 주문 락 지연~~                                                 | ~~`concurrent-order.js`~~ | ~~M1~~ (FOR UPDATE로 충분, Redlock 불필요) |
+|  ✅  | [인증 CPU 병목](../docs/scenarios/auth-cpu-bottleneck.md)             | `auth-stress.js`          | M2, M6                                     |
+|      | [서비스 장애 연쇄 전파](../docs/scenarios/service-cascade-failure.md) | `service-failure.js`      | M5                                         |
+|      | [주문 처리량 한계](../docs/scenarios/order-tps-limit.md)              | `order-stress.js`         | H1, H2, H3, H4                             |
 
 ### 기존 스크립트
 
