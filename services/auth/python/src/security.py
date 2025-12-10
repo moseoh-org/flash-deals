@@ -24,6 +24,7 @@ def create_access_token(user_id: UUID) -> str:
         "sub": str(user_id),
         "exp": expire,
         "type": "access",
+        "iss": "flash-deals",
     }
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
@@ -34,6 +35,7 @@ def create_refresh_token(user_id: UUID) -> str:
         "sub": str(user_id),
         "exp": expire,
         "type": "refresh",
+        "iss": "flash-deals",
     }
     return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 

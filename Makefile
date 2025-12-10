@@ -155,6 +155,13 @@ load-deal-spike:
 		--env HOLD_DURATION=$(or $(HOLD_DURATION),30s) \
 		tests/load/scripts/deal-spike.js
 
+# 동시 주문 재고 초과 테스트
+load-concurrent-order:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env CONCURRENT_USERS=$(or $(CONCURRENT_USERS),50) \
+		--env INITIAL_STOCK=$(or $(INITIAL_STOCK),10) \
+		tests/load/scripts/concurrent-order.js
+
 # ===================
 # Load Test Seeds
 # ===================

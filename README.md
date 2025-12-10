@@ -28,8 +28,6 @@
 | 1차  | httpx 커넥션 풀 재사용           | 295ms (3.7배↓) | 498 req/s (3.7배↑)  |
 | 2차  | Kong Gateway 도입                | 129ms (8.4배↓) | 982 req/s (7.4배↑)  |
 
-### (예정) [동시 주문 재고 초과](docs/scenarios/concurrent-order-oversell.md)
-
 ### (예정) [서비스 장애 연쇄 전파](docs/scenarios/service-cascade-failure.md)
 
 ### (예정) [인증 CPU 병목](docs/scenarios/auth-cpu-bottleneck.md)
