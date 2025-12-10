@@ -2,7 +2,13 @@ from uuid import UUID
 
 from src.database import get_connection
 from src.generated.models import OrdersOrder, OrdersOrderItem
-from src.generated.query import AsyncQuerier, CreateOrderItemParams, CreateOrderParams
+from src.generated.query import (
+    AsyncQuerier,
+    CreateOrderItemParams,
+    CreateOrderParams,
+    ListOrdersWithItemsByUserIDAndStatusRow,
+    ListOrdersWithItemsByUserIDRow,
+)
 from src.product_client import ProductClientError, decrease_stock, get_deal, get_product, increase_stock
 from src.schemas import (
     OrderItemRequest,
@@ -190,6 +196,52 @@ async def get_order(order_id: UUID, user_id: UUID) -> OrderResponse:
         return _order_to_response(order, items)
 
 
+def _rows_to_orders(
+    rows: list[ListOrdersWithItemsByUserIDRow | ListOrdersWithItemsByUserIDAndStatusRow],
+) -> list[OrderResponse]:
+    """JOIN 결과를 주문 목록으로 변환 (주문별로 아이템 그룹핑)"""
+    orders_dict: dict[UUID, tuple[OrdersOrder, list[OrdersOrderItem]]] = {}
+
+    for row in rows:
+        order_id = row.o_id
+
+        if order_id not in orders_dict:
+            # 주문 정보 생성
+            order = OrdersOrder(
+                id=row.o_id,
+                user_id=row.o_user_id,
+                total_amount=row.o_total_amount,
+                status=row.o_status,
+                recipient_name=row.o_recipient_name,
+                phone=row.o_phone,
+                address=row.o_address,
+                address_detail=row.o_address_detail,
+                postal_code=row.o_postal_code,
+                cancelled_at=row.o_cancelled_at,
+                cancel_reason=row.o_cancel_reason,
+                created_at=row.o_created_at,
+                updated_at=row.o_updated_at,
+            )
+            orders_dict[order_id] = (order, [])
+
+        # 아이템 추가 (LEFT JOIN이므로 아이템이 없을 수 있음)
+        if row.i_id is not None:
+            item = OrdersOrderItem(
+                id=row.i_id,
+                order_id=order_id,
+                product_id=row.i_product_id,
+                deal_id=row.i_deal_id,
+                product_name=row.i_product_name,
+                quantity=row.i_quantity,
+                unit_price=row.i_unit_price,
+                subtotal=row.i_subtotal,
+                created_at=row.i_created_at,
+            )
+            orders_dict[order_id][1].append(item)
+
+    return [_order_to_response(order, items) for order, items in orders_dict.values()]
+
+
 async def list_orders(
     user_id: UUID,
     page: int = 1,
@@ -197,6 +249,9 @@ async def list_orders(
     status: str | None = None,
 ) -> tuple[list[OrderResponse], int]:
     offset = (page - 1) * size
+    # JOIN 쿼리는 주문당 아이템 수만큼 행이 반환되므로 limit 조정
+    # 주문 20개 × 아이템 최대 10개 = 200행으로 넉넉하게
+    join_limit = size * 10
 
     async with get_connection() as conn:
         querier = AsyncQuerier(conn)
@@ -208,24 +263,23 @@ async def list_orders(
             total = await querier.count_orders_by_user_id(user_id=user_id)
         total = total or 0
 
-        # List
-        orders_list: list[OrderResponse] = []
+        # List with JOIN (N+1 해결)
+        rows: list[ListOrdersWithItemsByUserIDRow | ListOrdersWithItemsByUserIDAndStatusRow] = []
         if status:
-            orders_iter = querier.list_orders_by_user_id_and_status(
-                user_id=user_id, status=status, limit=size, offset=offset
-            )
+            async for row in querier.list_orders_with_items_by_user_id_and_status(
+                user_id=user_id, status=status, limit=join_limit, offset=offset
+            ):
+                rows.append(row)
         else:
-            orders_iter = querier.list_orders_by_user_id(
-                user_id=user_id, limit=size, offset=offset
-            )
+            async for row in querier.list_orders_with_items_by_user_id(
+                user_id=user_id, limit=join_limit, offset=offset
+            ):
+                rows.append(row)
 
-        async for order in orders_iter:
-            items: list[OrdersOrderItem] = []
-            async for item in querier.get_order_items_by_order_id(order_id=order.id):
-                items.append(item)
-            orders_list.append(_order_to_response(order, items))
+        orders_list = _rows_to_orders(rows)
 
-        return orders_list, total
+        # 페이지 크기에 맞게 자르기
+        return orders_list[:size], total
 
 
 async def cancel_order(order_id: UUID, user_id: UUID, reason: str | None = None) -> OrderResponse:
