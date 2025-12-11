@@ -1,8 +1,12 @@
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
 
+from src.config import settings
 from src.schemas import (
     CreateDealRequest,
     CreateProductRequest,
@@ -30,10 +34,39 @@ from src.service import (
 )
 from src.telemetry import setup_telemetry
 
+logger = logging.getLogger(__name__)
+
+# gRPC 서버 태스크
+_grpc_task: asyncio.Task | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _grpc_task
+
+    # Startup: gRPC 서버 시작
+    if settings.grpc_enabled:
+        from src.grpc_server import serve_grpc
+
+        logger.info(f"Starting gRPC server on port {settings.grpc_port}")
+        _grpc_task = asyncio.create_task(serve_grpc())
+
+    yield
+
+    # Shutdown: gRPC 서버 중지
+    if _grpc_task:
+        _grpc_task.cancel()
+        try:
+            await _grpc_task
+        except asyncio.CancelledError:
+            pass
+
+
 app = FastAPI(
     title="Product Service",
     description="상품 및 재고 관리 서비스",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 setup_telemetry(app)

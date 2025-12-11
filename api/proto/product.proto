@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package product;
+
+option go_package = "flash-deals/api/proto/product";
+
+// Product Service - 서비스 간 내부 통신용 gRPC API
+service ProductService {
+  // 상품 정보 조회
+  rpc GetProduct(GetProductRequest) returns (Product);
+
+  // 핫딜 정보 조회
+  rpc GetDeal(GetDealRequest) returns (Deal);
+
+  // 재고 변경 (delta: 양수면 증가, 음수면 감소)
+  rpc UpdateStock(UpdateStockRequest) returns (Product);
+}
+
+// 요청 메시지
+message GetProductRequest {
+  string product_id = 1;
+}
+
+message GetDealRequest {
+  string deal_id = 1;
+}
+
+message UpdateStockRequest {
+  string product_id = 1;
+  int32 delta = 2;  // 양수: 증가, 음수: 감소
+}
+
+// 응답 메시지
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  int32 price = 4;
+  int32 stock = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message Deal {
+  string id = 1;
+  string product_id = 2;
+  int32 deal_price = 3;
+  int32 stock_limit = 4;
+  string start_time = 5;
+  string end_time = 6;
+  string status = 7;
+  Product product = 8;
+}
+
+// 에러 응답 (gRPC status code로 처리하고, 상세 정보는 메타데이터로)
+// - NOT_FOUND: 상품/핫딜 없음
+// - FAILED_PRECONDITION: 재고 부족 (INSUFFICIENT_STOCK)
+// - INTERNAL: 서버 오류

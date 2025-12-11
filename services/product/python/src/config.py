@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     enable_cache: bool = False
     cache_ttl: int = 60
 
+    # gRPC
+    grpc_enabled: bool = False
+    grpc_port: int = 50051
+
     # OpenTelemetry
     otel_enabled: bool = False
     otel_service_name: str = "product-service"

@@ -169,7 +169,8 @@ services:
 
   product:
     build:
-      context: ./services/product/python
+      context: .
+      dockerfile: services/product/python/Dockerfile
     container_name: flash-deals-product
     environment:
       APP_PORT: 8002
@@ -183,6 +184,9 @@ services:
       REDIS_PORT: 6379
       ENABLE_CACHE: ${ENABLE_CACHE:-true}
       CACHE_TTL: 60
+      # gRPC
+      GRPC_ENABLED: ${GRPC_ENABLED:-false}
+      GRPC_PORT: 50051
       # OpenTelemetry
       OTEL_ENABLED: true
       OTEL_SERVICE_NAME: product-service
@@ -210,7 +214,8 @@ services:
 
   order:
     build:
-      context: ./services/order/python
+      context: .
+      dockerfile: services/order/python/Dockerfile
     container_name: flash-deals-order
     environment:
       APP_PORT: 8003
@@ -220,6 +225,11 @@ services:
       DB_USER: flash
       DB_PASSWORD: flash1234
       PRODUCT_SERVICE_URL: http://product:8002
+      # Product Client (http, http_pool, grpc)
+      PRODUCT_CLIENT_TYPE: ${PRODUCT_CLIENT_TYPE:-http}
+      PRODUCT_GRPC_HOST: product
+      PRODUCT_GRPC_PORT: 50051
+      # OpenTelemetry
       OTEL_ENABLED: true
       OTEL_SERVICE_NAME: order-service
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
