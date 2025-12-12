@@ -15,3 +15,10 @@ sql:
           package: "src.generated"
           emit_sync_querier: false
           emit_async_querier: true
+    gen:
+      go:
+        package: "db"
+        out: "go/internal/db"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_interface: true

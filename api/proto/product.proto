@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package product;
 
-option go_package = "flash-deals/api/proto/product";
+option go_package = "github.com/flash-deals/product/internal/proto";
 
 // Product Service - 서비스 간 내부 통신용 gRPC API
 service ProductService {
