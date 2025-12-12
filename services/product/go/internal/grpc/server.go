@@ -94,19 +94,14 @@ func (s *ProductServer) UpdateStock(ctx context.Context, req *proto.UpdateStockR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid product ID: %v", err)
 	}
 
-	// Get current stock
-	current, err := s.repo.GetStockForUpdate(ctx, id)
+	// 트랜잭션 내에서 FOR UPDATE 락과 재고 업데이트를 원자적으로 수행
+	row, err := s.repo.UpdateStockWithLock(ctx, id, req.Delta)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "product not found: %v", err)
-	}
-
-	newStock := current.Stock + req.Delta
-	if newStock < 0 {
-		return nil, status.Errorf(codes.FailedPrecondition, "insufficient stock")
-	}
-
-	row, err := s.repo.UpdateStock(ctx, id, newStock)
-	if err != nil {
+		// 재고 부족 에러 처리
+		errMsg := err.Error()
+		if len(errMsg) >= 18 && errMsg[:18] == "insufficient stock" {
+			return nil, status.Errorf(codes.FailedPrecondition, "insufficient stock")
+		}
 		return nil, status.Errorf(codes.Internal, "failed to update stock: %v", err)
 	}
 

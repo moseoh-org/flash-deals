@@ -143,6 +143,18 @@ func (r *CachedRepository) UpdateStock(ctx context.Context, id uuid.UUID, stock 
 	return row, nil
 }
 
+func (r *CachedRepository) UpdateStockWithLock(ctx context.Context, id uuid.UUID, delta int32) (*db.UpdateStockRow, error) {
+	row, err := r.dbRepo.UpdateStockWithLock(ctx, id, delta)
+	if err != nil {
+		return nil, err
+	}
+
+	// Invalidate cache
+	r.InvalidateProduct(ctx, id)
+
+	return row, nil
+}
+
 // Deals (no caching for deals)
 
 func (r *CachedRepository) CreateDeal(ctx context.Context, arg db.CreateDealParams) (*db.ProductDeal, error) {
