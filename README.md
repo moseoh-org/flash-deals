@@ -15,10 +15,10 @@
 
 ### [주문 목록 조회가 느림](docs/scenarios/order-list-slow.md)
 
-| 개선 | 내용      | p95 응답시간  | 처리량            |
-| ---- | --------- | ------------- | ----------------- |
-| 기존 | N+1 쿼리  | 274ms         | 36 req/s          |
-| 1차  | JOIN 쿼리 | 242ms (12%↓)  | 41 req/s (14%↑)   |
+| 개선 | 내용      | p95 응답시간   | 처리량            |
+| ---- | --------- | -------------- | ----------------- |
+| 기존 | N+1 쿼리  | 410ms          | 48 req/s          |
+| 1차  | JOIN 쿼리 | 361ms (1.1배↓) | 52 req/s (1.1배↑) |
 
 ### [핫딜 트래픽 급증](docs/scenarios/deal-traffic-spike.md)
 
@@ -35,7 +35,17 @@
 | 기존 | Auth 서비스 직접 호출   | 235ms          | 900 req/s             |
 | 1차  | Kong JWT + Proxy Cache  | 20ms (11.8배↓) | 11,337 req/s (12.6배↑) |
 
-### (예정) [서비스 장애 연쇄 전파](docs/scenarios/service-cascade-failure.md)
+### [주문 처리량 한계](docs/scenarios/order-tps-limit.md)
+
+| 개선 | 내용                    | p95 응답시간   | 처리량               |
+| ---- | ----------------------- | -------------- | -------------------- |
+| 기존 | HTTP/JSON 통신          | 867ms          | 46 req/s             |
+| 1차  | gRPC 전환               | 367ms (2.4배↓) | 125 req/s (2.7배↑)   |
+| 2차  | Uvicorn 2워커           | 224ms (3.9배↓) | 208 req/s (4.5배↑)   |
+| 3차  | Product Go 전환         | 154ms (5.6배↓) | 253 req/s (5.5배↑)   |
+| 4차  | Order Go 전환           | 20ms (43배↓)   | 295 req/s (6.4배↑)   |
+
+### (예정) [선착순 주문 순서 미보장](docs/scenarios/fifo-ordering.md)
 
 ## Documentation
 
