@@ -288,7 +288,7 @@
 
 ### 🔴 Hard (난이도 상) - 대규모 아키텍처 변경
 
-#### H1. gRPC 전환 (서비스 간 통신)
+#### H1. gRPC 전환 (서비스 간 통신) ✅ 완료
 
 | 항목          | 내용                                                                  |
 | ------------- | --------------------------------------------------------------------- |
@@ -298,6 +298,7 @@
 | **해결책**    | gRPC (HTTP/2 + Protocol Buffers) 전환, 연결 재사용                    |
 | **측정 방법** | 서비스 간 통신 지연 시간 측정 (HTTP vs gRPC)                          |
 | **k6 테스트** | `inter-service.js` - 서비스 간 호출 포함 시나리오                     |
+| **결과**      | ✅ 처리량 2.7배 증가 (46 → 125 req/s), p95 867ms → 367ms              |
 
 #### H2. Kafka 비동기 처리 (주문)
 
@@ -310,7 +311,7 @@
 | **측정 방법** | 주문 요청 TPS vs 실제 처리 완료 TPS 비교                                |
 | **k6 테스트** | `async-order.js` - 대량 주문 처리량 테스트                              |
 
-#### H3. Python → Go (Auth Service)
+#### ~~H3. Python → Go (Auth Service)~~ ❌ 불필요
 
 | 항목          | 내용                                                     |
 | ------------- | -------------------------------------------------------- |
@@ -320,8 +321,21 @@
 | **해결책**    | Go로 Auth Service 재작성 (goroutine으로 병렬 처리)       |
 | **측정 방법** | 동일 하드웨어에서 로그인 API TPS 비교                    |
 | **k6 테스트** | `auth-flow.js` - 인증 API 최대 처리량 테스트             |
+| **결론**      | ❌ **개선 불필요** - Kong JWT 플러그인 + Proxy Cache가 이미 문제 해결. 현재 상태: 8,520 req/s, Auth CPU 0.9% |
 
-#### H4. Python → Go (Order Service)
+#### H3-1. Python → Go (Product Service) ✅ 완료
+
+| 항목          | 내용                                                              |
+| ------------- | ----------------------------------------------------------------- |
+| **문제 발견** | gRPC 전환 후 **Product Service가 새로운 병목** (CPU 79%)          |
+| **증상**      | Order Service는 여유있는데 Product에서 대기열 발생                |
+| **원인 분석** | gRPC 서버 처리 + DB 쿼리가 Python에서 CPU 병목                    |
+| **해결책**    | Go로 Product Service 재작성 (gRPC 서버 + HTTP API)                |
+| **측정 방법** | 주문 처리량 및 Product CPU 사용량 비교                            |
+| **k6 테스트** | `order-stress.js` - 주문 처리량 테스트                            |
+| **결과**      | ✅ 처리량 22% 증가 (208 → 253 req/s), CPU 83% 절감 (120% → 20%)  |
+
+#### H4. Python → Go (Order Service) ✅ 완료
 
 | 항목          | 내용                                                             |
 | ------------- | ---------------------------------------------------------------- |
@@ -331,6 +345,7 @@
 | **해결책**    | Go로 Order Service 재작성, I/O 멀티플렉싱 최적화                 |
 | **측정 방법** | 전체 주문 플로우 TPS 비교 (Python vs Go)                         |
 | **k6 테스트** | `order-scenario.js` - 전체 주문 시나리오 처리량                  |
+| **결과**      | ✅ 처리량 17% 증가 (253 → 295 req/s), CPU 85% 절감 (100% → 15%) |
 
 #### H5. Kong Gateway 전환
 
@@ -360,7 +375,7 @@
 |  ❌  | ~~동시 주문 락 지연~~                                                 | ~~`concurrent-order.js`~~ | ~~M1~~ (FOR UPDATE로 충분, Redlock 불필요) |
 |  ✅  | [인증 CPU 병목](../docs/scenarios/auth-cpu-bottleneck.md)             | `auth-stress.js`          | M2, M6                                     |
 |      | [서비스 장애 연쇄 전파](../docs/scenarios/service-cascade-failure.md) | `service-failure.js`      | M5                                         |
-|      | [주문 처리량 한계](../docs/scenarios/order-tps-limit.md)              | `order-stress.js`         | H1, H2, H3, H4                             |
+|  ✅  | [주문 처리량 한계](../docs/scenarios/order-tps-limit.md)              | `order-stress.js`         | H1, H3-1, H4 (6.4배 향상: 46→295 req/s)    |
 
 ### 기존 스크립트
 
