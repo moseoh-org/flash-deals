@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # Service URLs
     product_service_url: str = "http://localhost:8002"
 
+    # Product Client (http, http_pool, grpc)
+    product_client_type: str = "http"  # "http", "http_pool", "grpc"
+    product_grpc_host: str = "product"
+    product_grpc_port: int = 50051
+
     # OpenTelemetry
     otel_enabled: bool = False
     otel_service_name: str = "order-service"

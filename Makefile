@@ -170,6 +170,15 @@ load-auth-stress:
 		--env HOLD_DURATION=$(or $(HOLD_DURATION),30s) \
 		tests/load/scripts/auth-stress.js
 
+# 주문 처리량 한계 테스트
+load-order-stress:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env MAX_VUS=$(or $(MAX_VUS),50) \
+		--env NUM_USERS=$(or $(NUM_USERS),50) \
+		--env RAMP_DURATION=$(or $(RAMP_DURATION),30s) \
+		--env HOLD_DURATION=$(or $(HOLD_DURATION),60s) \
+		tests/load/scripts/order-stress.js
+
 # ===================
 # Load Test Seeds
 # ===================

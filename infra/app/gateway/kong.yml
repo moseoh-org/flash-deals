@@ -69,6 +69,15 @@ plugins:
         - exp
 
   # ===================
+  # JWT Plugin (Order Routes)
+  # ===================
+  - name: jwt
+    route: order-routes
+    config:
+      claims_to_verify:
+        - exp
+
+  # ===================
   # Proxy Cache (Protected Routes)
   # ===================
   - name: proxy-cache
