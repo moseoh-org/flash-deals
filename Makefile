@@ -186,6 +186,16 @@ load-fifo-test:
 		--env INITIAL_STOCK=$(or $(INITIAL_STOCK),10) \
 		tests/load/scripts/fifo-order.js
 
+# 서버 과부하 테스트
+load-order-overload:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env MAX_VUS=$(or $(MAX_VUS),500) \
+		--env NUM_USERS=$(or $(NUM_USERS),100) \
+		--env RAMP_DURATION=$(or $(RAMP_DURATION),10s) \
+		--env HOLD_DURATION=$(or $(HOLD_DURATION),30s) \
+		--env REQUEST_TIMEOUT=$(or $(REQUEST_TIMEOUT),5s) \
+		tests/load/scripts/order-overload.js
+
 # ===================
 # Load Test Seeds
 # ===================

@@ -45,7 +45,7 @@
 | 3차  | Product Go 전환         | 154ms (5.6배↓) | 253 req/s (5.5배↑)   |
 | 4차  | Order Go 전환           | 20ms (43배↓)   | 295 req/s (6.4배↑)   |
 
-### [재고 차감 시 Lock 경합](docs/scenarios/stock-lock-contention.md)
+### [핫딜 주문 시 Lock 경합](docs/scenarios/deal-lock-contention.md)
 
 | 개선 | 내용                 | p95 응답시간 | 처리량             |
 | ---- | -------------------- | ------------ | ------------------ |
