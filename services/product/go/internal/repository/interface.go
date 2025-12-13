@@ -19,6 +19,7 @@ type ProductRepository interface {
 	UpdateProduct(ctx context.Context, arg db.UpdateProductParams) (*db.ProductProduct, error)
 	GetStockForUpdate(ctx context.Context, id uuid.UUID) (*db.GetStockForUpdateRow, error)
 	UpdateStock(ctx context.Context, id uuid.UUID, stock int32) (*db.UpdateStockRow, error)
+	UpdateStockWithLock(ctx context.Context, id uuid.UUID, delta int32) (*db.UpdateStockRow, error)
 
 	// Deals
 	CreateDeal(ctx context.Context, arg db.CreateDealParams) (*db.ProductDeal, error)

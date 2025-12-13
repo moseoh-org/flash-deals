@@ -179,6 +179,13 @@ load-order-stress:
 		--env HOLD_DURATION=$(or $(HOLD_DURATION),60s) \
 		tests/load/scripts/order-stress.js
 
+# 선착순 주문 순서 테스트
+load-fifo-test:
+	k6 run --env BASE_URL=http://localhost:8000 \
+		--env NUM_USERS=$(or $(NUM_USERS),20) \
+		--env INITIAL_STOCK=$(or $(INITIAL_STOCK),10) \
+		tests/load/scripts/fifo-order.js
+
 # ===================
 # Load Test Seeds
 # ===================

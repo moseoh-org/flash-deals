@@ -289,7 +289,7 @@
 | **k6 테스트** | `inter-service.js` - 서비스 간 호출 포함 시나리오                     |
 | **결과**      | ✅ 처리량 2.7배 증가 (46 → 125 req/s), p95 867ms → 367ms              |
 
-#### H2. Go Channel FIFO 큐 (선착순 보장)
+#### H2. Go Channel FIFO 큐 (선착순 보장) ✅ 완료
 
 | 항목          | 내용                                                                    |
 | ------------- | ----------------------------------------------------------------------- |
@@ -299,18 +299,10 @@
 | **해결책**    | Go Channel을 FIFO 큐로 활용, Worker가 순차 처리                         |
 | **측정 방법** | 순차 요청 후 성공한 유저 ID가 요청 순서와 일치하는지 검증               |
 | **k6 테스트** | `fifo-order.js` - 선착순 보장 테스트                                    |
+| **결과**      | ✅ 처리량 1.9배 증가 (160 → 303 req/s), 서버측 FIFO 순서 보장           |
 | **한계**      | 단일 서버 전용, 서버 재시작 시 큐 유실                                  |
 
-#### H2-1. Kafka 비동기 처리 (선착순 + 확장성)
-
-| 항목          | 내용                                                                    |
-| ------------- | ----------------------------------------------------------------------- |
-| **문제 발견** | Go Channel은 **단일 서버에서만 동작**, 확장성 및 내구성 부족            |
-| **증상**      | 서버 재시작 시 큐 유실, 다중 서버 환경에서 순서 보장 불가               |
-| **원인 분석** | 인메모리 큐는 프로세스 종료 시 데이터 유실                              |
-| **해결책**    | Kafka Topic + deal_id Partition Key로 같은 상품 주문은 같은 파티션      |
-| **측정 방법** | 다중 서버 환경에서 선착순 보장 검증, 서버 재시작 후 처리 재개 확인      |
-| **k6 테스트** | `fifo-order.js` - 선착순 보장 테스트 (Kafka 버전)                       |
+> 다중 서버 환경 확장은 [다중 서버 순서 미보장](../docs/scenarios/multi-server-fifo.md) 참고
 
 #### ~~H3. Python → Go (Auth Service)~~ ❌ 불필요
 
@@ -376,7 +368,7 @@
 |  ❌  | ~~동시 주문 락 지연~~                                                 | ~~`concurrent-order.js`~~ | ~~M1~~ (FOR UPDATE로 충분, Redlock 불필요) |
 |  ✅  | [인증 CPU 병목](../docs/scenarios/auth-cpu-bottleneck.md)             | `auth-stress.js`          | M2, M5                                     |
 |  ✅  | [주문 처리량 한계](../docs/scenarios/order-tps-limit.md)              | `order-stress.js`         | H1, H3-1, H4 (6.4배 향상: 46→295 req/s)    |
-|      | [선착순 주문 순서 미보장](../docs/scenarios/fifo-ordering.md)         | `fifo-order.js`           | H2, H2-1                                   |
+|  ✅  | [선착순 주문 순서 미보장](../docs/scenarios/fifo-ordering.md)         | `fifo-order.js`           | H2                                         |
 
 ### 기존 스크립트
 
