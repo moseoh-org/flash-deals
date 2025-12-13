@@ -46,21 +46,37 @@ func main() {
 	dbRepo := repository.NewDBRepository(pool)
 	var repo repository.ProductRepository = dbRepo
 
-	// Initialize Redis and Cached Repository if enabled
-	if cfg.EnableCache {
-		redisClient := redis.NewClient(&redis.Options{
-			Addr: cfg.RedisAddr(),
-		})
-		if err := redisClient.Ping(ctx).Err(); err != nil {
-			log.Printf("Warning: Failed to connect to Redis: %v", err)
+	// Initialize Redis Client
+	var redisClient *redis.Client
+	redisClient = redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr(),
+	})
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Printf("Warning: Failed to connect to Redis: %v", err)
+		redisClient = nil
+	} else {
+		log.Println("Connected to Redis")
+	}
+
+	// Initialize Cached Repository if enabled
+	if cfg.EnableCache && redisClient != nil {
+		repo = repository.NewCachedRepository(dbRepo, redisClient, cfg.CacheTTL)
+		log.Println("Cache enabled with Redis")
+	}
+
+	// Initialize Hotdeal Repository
+	var hotdealRepo *repository.HotdealRepository
+	if redisClient != nil {
+		hotdealRepo = repository.NewHotdealRepository(redisClient, cfg.HotdealStockRedis)
+		if cfg.HotdealStockRedis {
+			log.Println("Hotdeal Redis stock enabled")
 		} else {
-			repo = repository.NewCachedRepository(dbRepo, redisClient, cfg.CacheTTL)
-			log.Println("Cache enabled with Redis")
+			log.Println("Hotdeal Redis stock disabled (using DB)")
 		}
 	}
 
 	// Initialize Handler
-	productHandler := handler.NewProductHandler(repo)
+	productHandler := handler.NewProductHandler(repo, hotdealRepo)
 
 	// Initialize Echo
 	e := echo.New()
@@ -91,10 +107,14 @@ func main() {
 	e.GET("/deals", productHandler.ListActiveDeals)
 	e.GET("/deals/:id", productHandler.GetDeal)
 
+	// Hotdeal Stock
+	e.POST("/products/:id/hotdeal/start", productHandler.StartHotdeal)
+	e.POST("/products/:id/hotdeal/end", productHandler.EndHotdeal)
+
 	// Start gRPC server if enabled
 	if cfg.GRPCEnabled {
 		go func() {
-			if err := grpcserver.StartGRPCServer(cfg, repo, cfg.OTelEnabled); err != nil {
+			if err := grpcserver.StartGRPCServer(cfg, repo, hotdealRepo, cfg.OTelEnabled); err != nil {
 				log.Printf("gRPC server error: %v", err)
 			}
 		}()

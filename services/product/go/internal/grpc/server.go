@@ -20,16 +20,18 @@ import (
 
 type ProductServer struct {
 	proto.UnimplementedProductServiceServer
-	repo       repository.ProductRepository
-	stockQueue *queue.StockQueue
+	repo        repository.ProductRepository
+	stockQueue  *queue.StockQueue
+	hotdealRepo *repository.HotdealRepository
 }
 
-func NewProductServer(repo repository.ProductRepository) *ProductServer {
+func NewProductServer(repo repository.ProductRepository, hotdealRepo *repository.HotdealRepository) *ProductServer {
 	// StockQueue 생성 (버퍼 크기: 10000)
 	stockQueue := queue.NewStockQueue(repo, 10000)
 	return &ProductServer{
-		repo:       repo,
-		stockQueue: stockQueue,
+		repo:        repo,
+		stockQueue:  stockQueue,
+		hotdealRepo: hotdealRepo,
 	}
 }
 
@@ -101,15 +103,41 @@ func (s *ProductServer) UpdateStock(ctx context.Context, req *proto.UpdateStockR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid product ID: %v", err)
 	}
 
-	// Go Channel 큐를 통해 FIFO 순서로 재고 업데이트
-	row, err := s.stockQueue.UpdateStock(ctx, id, req.Delta)
-	if err != nil {
-		// 재고 부족 에러 처리
-		errMsg := err.Error()
-		if len(errMsg) >= 18 && errMsg[:18] == "insufficient stock" {
-			return nil, status.Errorf(codes.FailedPrecondition, "insufficient stock")
+	var newStock int32
+
+	// Check if this product has hotdeal stock in Redis
+	if s.hotdealRepo != nil && s.hotdealRepo.HasStock(ctx, id) {
+		// Use Redis for hotdeal products (atomic Lua script)
+		if req.Delta < 0 {
+			// Decrement
+			stock, err := s.hotdealRepo.DecrementStock(ctx, id, -req.Delta)
+			if err != nil {
+				if err.Error() == "insufficient stock" {
+					return nil, status.Errorf(codes.FailedPrecondition, "insufficient stock")
+				}
+				return nil, status.Errorf(codes.Internal, "failed to update stock: %v", err)
+			}
+			newStock = stock
+		} else {
+			// Increment
+			stock, err := s.hotdealRepo.IncrementStock(ctx, id, req.Delta)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to update stock: %v", err)
+			}
+			newStock = stock
 		}
-		return nil, status.Errorf(codes.Internal, "failed to update stock: %v", err)
+	} else {
+		// Use DB via Go Channel queue for non-hotdeal products
+		row, err := s.stockQueue.UpdateStock(ctx, id, req.Delta)
+		if err != nil {
+			// 재고 부족 에러 처리
+			errMsg := err.Error()
+			if len(errMsg) >= 18 && errMsg[:18] == "insufficient stock" {
+				return nil, status.Errorf(codes.FailedPrecondition, "insufficient stock")
+			}
+			return nil, status.Errorf(codes.Internal, "failed to update stock: %v", err)
+		}
+		newStock = row.Stock
 	}
 
 	// Get full product for response
@@ -122,9 +150,9 @@ func (s *ProductServer) UpdateStock(ctx context.Context, req *proto.UpdateStockR
 		Id:        uuidToString(product.ID),
 		Name:      product.Name,
 		Price:     product.Price,
-		Stock:     row.Stock,
+		Stock:     newStock,
 		CreatedAt: product.CreatedAt.Time.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt: row.UpdatedAt.Time.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt: product.UpdatedAt.Time.Format("2006-01-02T15:04:05Z"),
 	}
 	if product.Description.Valid {
 		resp.Description = product.Description.String
@@ -133,7 +161,7 @@ func (s *ProductServer) UpdateStock(ctx context.Context, req *proto.UpdateStockR
 	return resp, nil
 }
 
-func StartGRPCServer(cfg *config.Config, repo repository.ProductRepository, otelEnabled bool) error {
+func StartGRPCServer(cfg *config.Config, repo repository.ProductRepository, hotdealRepo *repository.HotdealRepository, otelEnabled bool) error {
 	addr := fmt.Sprintf(":%s", cfg.GRPCPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -148,7 +176,7 @@ func StartGRPCServer(cfg *config.Config, repo repository.ProductRepository, otel
 	}
 
 	server := grpc.NewServer(opts...)
-	proto.RegisterProductServiceServer(server, NewProductServer(repo))
+	proto.RegisterProductServiceServer(server, NewProductServer(repo, hotdealRepo))
 
 	log.Printf("gRPC server starting on %s", addr)
 	return server.Serve(lis)

@@ -11,11 +11,17 @@ import (
 )
 
 type OrderHandler struct {
-	svc *service.OrderService
+	svc          *service.OrderService
+	asyncEnabled bool
 }
 
 func NewOrderHandler(svc *service.OrderService) *OrderHandler {
-	return &OrderHandler{svc: svc}
+	return &OrderHandler{svc: svc, asyncEnabled: false}
+}
+
+// SetAsyncEnabled enables or disables async order processing
+func (h *OrderHandler) SetAsyncEnabled(enabled bool) {
+	h.asyncEnabled = enabled
 }
 
 // Request/Response DTOs
@@ -147,15 +153,25 @@ func (h *OrderHandler) CreateOrder(c echo.Context) error {
 		}
 	}
 
-	order, err := h.svc.CreateOrder(c.Request().Context(), userID, items, shipping)
-	if err != nil {
-		if svcErr, ok := err.(*service.ServiceError); ok {
-			return c.JSON(svcErr.Status, ErrorResponse{Error: svcErr.Code, Message: svcErr.Message})
-		}
-		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "INTERNAL_ERROR", Message: err.Error()})
+	var order *service.OrderResponse
+	var orderErr error
+
+	if h.asyncEnabled {
+		// Async processing: stock deduction + queue + immediate response
+		order, orderErr = h.svc.AsyncCreateOrder(c.Request().Context(), userID, items, shipping)
+	} else {
+		// Sync processing: stock deduction + DB insert + response
+		order, orderErr = h.svc.CreateOrder(c.Request().Context(), userID, items, shipping)
 	}
 
-	return c.JSON(http.StatusCreated, toOrderResponse(order))
+	if orderErr != nil {
+		if svcErr, ok := orderErr.(*service.ServiceError); ok {
+			return c.JSON(svcErr.Status, ErrorResponse{Error: svcErr.Code, Message: svcErr.Message})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "INTERNAL_ERROR", Message: orderErr.Error()})
+	}
+
+	return c.JSON(http.StatusAccepted, toOrderResponse(order))
 }
 
 func (h *OrderHandler) GetOrder(c echo.Context) error {
@@ -229,6 +245,33 @@ func (h *OrderHandler) ListOrders(c echo.Context) error {
 		Page:  page,
 		Size:  size,
 	})
+}
+
+func (h *OrderHandler) ConfirmOrder(c echo.Context) error {
+	userIDStr := c.Request().Header.Get("X-User-ID")
+	if userIDStr == "" {
+		return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "UNAUTHORIZED", Message: "X-User-ID header required"})
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "INVALID_USER_ID", Message: "Invalid user ID format"})
+	}
+
+	orderIDStr := c.Param("id")
+	orderID, err := uuid.Parse(orderIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "INVALID_ORDER_ID", Message: "Invalid order ID format"})
+	}
+
+	order, err := h.svc.ConfirmOrder(c.Request().Context(), orderID, userID)
+	if err != nil {
+		if svcErr, ok := err.(*service.ServiceError); ok {
+			return c.JSON(svcErr.Status, ErrorResponse{Error: svcErr.Code, Message: svcErr.Message})
+		}
+		return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "INTERNAL_ERROR", Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, toOrderResponse(order))
 }
 
 func (h *OrderHandler) CancelOrder(c echo.Context) error {

@@ -12,11 +12,13 @@ import (
 
 type Querier interface {
 	CancelOrder(ctx context.Context, arg CancelOrderParams) (OrdersOrder, error)
+	ConfirmOrder(ctx context.Context, id pgtype.UUID) (OrdersOrder, error)
 	CountOrdersByUserID(ctx context.Context, userID pgtype.UUID) (int64, error)
 	CountOrdersByUserIDAndStatus(ctx context.Context, arg CountOrdersByUserIDAndStatusParams) (int64, error)
 	// Order queries
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (OrdersOrder, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrdersOrderItem, error)
+	CreateOrderWithID(ctx context.Context, arg CreateOrderWithIDParams) (OrdersOrder, error)
 	GetOrderByID(ctx context.Context, id pgtype.UUID) (OrdersOrder, error)
 	GetOrderForUpdate(ctx context.Context, id pgtype.UUID) (GetOrderForUpdateRow, error)
 	GetOrderItemsByOrderID(ctx context.Context, orderID pgtype.UUID) ([]OrdersOrderItem, error)

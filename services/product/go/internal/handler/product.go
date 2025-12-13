@@ -13,11 +13,12 @@ import (
 )
 
 type ProductHandler struct {
-	repo repository.ProductRepository
+	repo        repository.ProductRepository
+	hotdealRepo *repository.HotdealRepository
 }
 
-func NewProductHandler(repo repository.ProductRepository) *ProductHandler {
-	return &ProductHandler{repo: repo}
+func NewProductHandler(repo repository.ProductRepository, hotdealRepo *repository.HotdealRepository) *ProductHandler {
+	return &ProductHandler{repo: repo, hotdealRepo: hotdealRepo}
 }
 
 // Request/Response DTOs
@@ -470,5 +471,80 @@ func (h *ProductHandler) ListActiveDeals(c echo.Context) error {
 		Total: total,
 		Limit: limit,
 		Skip:  offset,
+	})
+}
+
+// Hotdeal Handlers
+
+type HotdealResponse struct {
+	ProductID string `json:"product_id"`
+	Stock     int32  `json:"stock"`
+	Message   string `json:"message"`
+}
+
+func (h *ProductHandler) StartHotdeal(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid product ID"})
+	}
+
+	// Get current stock from DB
+	product, err := h.repo.GetProductByID(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Product not found"})
+	}
+
+	// Load stock to Redis (no-op if disabled)
+	if h.hotdealRepo != nil {
+		if err := h.hotdealRepo.LoadStock(c.Request().Context(), id, product.Stock); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+	}
+
+	return c.JSON(http.StatusOK, HotdealResponse{
+		ProductID: id.String(),
+		Stock:     product.Stock,
+		Message:   "Hotdeal started",
+	})
+}
+
+func (h *ProductHandler) EndHotdeal(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid product ID"})
+	}
+
+	ctx := c.Request().Context()
+	var remainingStock int32
+
+	// Unload stock from Redis (no-op if disabled)
+	if h.hotdealRepo != nil && h.hotdealRepo.IsEnabled() {
+		stock, err := h.hotdealRepo.UnloadStock(ctx, id)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		remainingStock = stock
+
+		// Sync remaining stock back to DB
+		if stock > 0 {
+			if _, err := h.repo.UpdateStock(ctx, id, stock); err != nil {
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to sync stock to DB"})
+			}
+		}
+	} else {
+		// Just get current DB stock when Redis is disabled
+		product, err := h.repo.GetProductByID(ctx, id)
+		if err != nil {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "Product not found"})
+		}
+		remainingStock = product.Stock
+	}
+
+	return c.JSON(http.StatusOK, HotdealResponse{
+		ProductID: id.String(),
+		Stock:     remainingStock,
+		Message:   "Hotdeal ended",
 	})
 }

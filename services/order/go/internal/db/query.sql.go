@@ -44,6 +44,34 @@ func (q *Queries) CancelOrder(ctx context.Context, arg CancelOrderParams) (Order
 	return i, err
 }
 
+const confirmOrder = `-- name: ConfirmOrder :one
+UPDATE orders.orders
+SET status = 'confirmed', updated_at = NOW()
+WHERE id = $1
+RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at
+`
+
+func (q *Queries) ConfirmOrder(ctx context.Context, id pgtype.UUID) (OrdersOrder, error) {
+	row := q.db.QueryRow(ctx, confirmOrder, id)
+	var i OrdersOrder
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TotalAmount,
+		&i.Status,
+		&i.RecipientName,
+		&i.Phone,
+		&i.Address,
+		&i.AddressDetail,
+		&i.PostalCode,
+		&i.CancelledAt,
+		&i.CancelReason,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const countOrdersByUserID = `-- name: CountOrdersByUserID :one
 SELECT COUNT(*) FROM orders.orders WHERE user_id = $1
 `
@@ -157,6 +185,55 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		&i.UnitPrice,
 		&i.Subtotal,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createOrderWithID = `-- name: CreateOrderWithID :one
+INSERT INTO orders.orders (id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at
+`
+
+type CreateOrderWithIDParams struct {
+	ID            pgtype.UUID       `json:"id"`
+	UserID        pgtype.UUID       `json:"user_id"`
+	TotalAmount   int32             `json:"total_amount"`
+	Status        OrdersOrderStatus `json:"status"`
+	RecipientName pgtype.Text       `json:"recipient_name"`
+	Phone         pgtype.Text       `json:"phone"`
+	Address       pgtype.Text       `json:"address"`
+	AddressDetail pgtype.Text       `json:"address_detail"`
+	PostalCode    pgtype.Text       `json:"postal_code"`
+}
+
+func (q *Queries) CreateOrderWithID(ctx context.Context, arg CreateOrderWithIDParams) (OrdersOrder, error) {
+	row := q.db.QueryRow(ctx, createOrderWithID,
+		arg.ID,
+		arg.UserID,
+		arg.TotalAmount,
+		arg.Status,
+		arg.RecipientName,
+		arg.Phone,
+		arg.Address,
+		arg.AddressDetail,
+		arg.PostalCode,
+	)
+	var i OrdersOrder
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TotalAmount,
+		&i.Status,
+		&i.RecipientName,
+		&i.Phone,
+		&i.Address,
+		&i.AddressDetail,
+		&i.PostalCode,
+		&i.CancelledAt,
+		&i.CancelReason,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
