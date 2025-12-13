@@ -21,6 +21,14 @@ RETURNING id, user_id, total_amount, status, recipient_name, phone, address, add
 """
 
 
+CONFIRM_ORDER = """-- name: confirm_order \\:one
+UPDATE orders.orders
+SET status = 'confirmed', updated_at = NOW()
+WHERE id = :p1
+RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at
+"""
+
+
 COUNT_ORDERS_BY_USER_ID = """-- name: count_orders_by_user_id \\:one
 SELECT COUNT(*) FROM orders.orders WHERE user_id = :p1
 """
@@ -67,6 +75,26 @@ class CreateOrderItemParams:
     quantity: int
     unit_price: int
     subtotal: int
+
+
+CREATE_ORDER_WITH_ID = """-- name: create_order_with_id \\:one
+INSERT INTO orders.orders (id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code)
+VALUES (:p1, :p2, :p3, :p4, :p5, :p6, :p7, :p8, :p9)
+RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at
+"""
+
+
+@dataclasses.dataclass()
+class CreateOrderWithIDParams:
+    id: uuid.UUID
+    user_id: uuid.UUID
+    total_amount: int
+    status: Any
+    recipient_name: Optional[str]
+    phone: Optional[str]
+    address: Optional[str]
+    address_detail: Optional[str]
+    postal_code: Optional[str]
 
 
 GET_ORDER_BY_ID = """-- name: get_order_by_id \\:one
@@ -258,6 +286,26 @@ class AsyncQuerier:
             updated_at=row[12],
         )
 
+    async def confirm_order(self, *, id: uuid.UUID) -> Optional[models.OrdersOrder]:
+        row = (await self._conn.execute(sqlalchemy.text(CONFIRM_ORDER), {"p1": id})).first()
+        if row is None:
+            return None
+        return models.OrdersOrder(
+            id=row[0],
+            user_id=row[1],
+            total_amount=row[2],
+            status=row[3],
+            recipient_name=row[4],
+            phone=row[5],
+            address=row[6],
+            address_detail=row[7],
+            postal_code=row[8],
+            cancelled_at=row[9],
+            cancel_reason=row[10],
+            created_at=row[11],
+            updated_at=row[12],
+        )
+
     async def count_orders_by_user_id(self, *, user_id: uuid.UUID) -> Optional[int]:
         row = (await self._conn.execute(sqlalchemy.text(COUNT_ORDERS_BY_USER_ID), {"p1": user_id})).first()
         if row is None:
@@ -321,6 +369,36 @@ class AsyncQuerier:
             unit_price=row[6],
             subtotal=row[7],
             created_at=row[8],
+        )
+
+    async def create_order_with_id(self, arg: CreateOrderWithIDParams) -> Optional[models.OrdersOrder]:
+        row = (await self._conn.execute(sqlalchemy.text(CREATE_ORDER_WITH_ID), {
+            "p1": arg.id,
+            "p2": arg.user_id,
+            "p3": arg.total_amount,
+            "p4": arg.status,
+            "p5": arg.recipient_name,
+            "p6": arg.phone,
+            "p7": arg.address,
+            "p8": arg.address_detail,
+            "p9": arg.postal_code,
+        })).first()
+        if row is None:
+            return None
+        return models.OrdersOrder(
+            id=row[0],
+            user_id=row[1],
+            total_amount=row[2],
+            status=row[3],
+            recipient_name=row[4],
+            phone=row[5],
+            address=row[6],
+            address_detail=row[7],
+            postal_code=row[8],
+            cancelled_at=row[9],
+            cancel_reason=row[10],
+            created_at=row[11],
+            updated_at=row[12],
         )
 
     async def get_order_by_id(self, *, id: uuid.UUID) -> Optional[models.OrdersOrder]:

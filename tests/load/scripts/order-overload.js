@@ -121,6 +121,21 @@ export function setup() {
 
   const productData = JSON.parse(productRes.body);
   console.log(`상품 생성 완료: ${productData.id}`);
+
+  // 핫딜 시작 (Redis 재고 로드)
+  console.log('핫딜 시작 중...');
+  const hotdealRes = http.post(
+    `${BASE_URL}/products/${productData.id}/hotdeal/start`,
+    null,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+
+  if (hotdealRes.status === 200) {
+    console.log(`핫딜 시작 완료 (Redis 재고 로드)`);
+  } else {
+    console.log(`핫딜 시작 (Redis 비활성화 또는 오류): ${hotdealRes.status}`);
+  }
+
   console.log(`\n⚠️  과부하 테스트 시작 - 에러 발생이 예상됩니다\n`);
 
   return {
@@ -174,7 +189,7 @@ export default function (data) {
   const duration = Date.now() - startTime;
   orderDuration.add(duration);
 
-  const success = orderRes.status === 201;
+  const success = orderRes.status === 202;
 
   if (success) {
     successCount.add(1);
@@ -189,6 +204,25 @@ export default function (data) {
   errorRate.add(!success);
 
   // think time 없음 (최대 부하)
+}
+
+export function teardown(data) {
+  if (!data.productId) return;
+
+  // 핫딜 종료 (Redis → DB 동기화)
+  console.log('\n핫딜 종료 중...');
+  const hotdealRes = http.post(
+    `${BASE_URL}/products/${data.productId}/hotdeal/end`,
+    null,
+    { headers: { 'Content-Type': 'application/json' } }
+  );
+
+  if (hotdealRes.status === 200) {
+    const result = JSON.parse(hotdealRes.body);
+    console.log(`핫딜 종료 완료 - 남은 재고: ${result.stock}`);
+  } else {
+    console.log(`핫딜 종료 오류: ${hotdealRes.status}`);
+  }
 }
 
 export function handleSummary(data) {

@@ -5,6 +5,11 @@ INSERT INTO orders.orders (user_id, total_amount, status, recipient_name, phone,
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at;
 
+-- name: CreateOrderWithID :one
+INSERT INTO orders.orders (id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at;
+
 -- name: CreateOrderItem :one
 INSERT INTO orders.order_items (order_id, product_id, deal_id, product_name, quantity, unit_price, subtotal)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -44,6 +49,12 @@ SELECT COUNT(*) FROM orders.orders WHERE user_id = $1 AND status = $2;
 -- name: UpdateOrderStatus :one
 UPDATE orders.orders
 SET status = $2, updated_at = NOW()
+WHERE id = $1
+RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at;
+
+-- name: ConfirmOrder :one
+UPDATE orders.orders
+SET status = 'confirmed', updated_at = NOW()
 WHERE id = $1
 RETURNING id, user_id, total_amount, status, recipient_name, phone, address, address_detail, postal_code, cancelled_at, cancel_reason, created_at, updated_at;
 

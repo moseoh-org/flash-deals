@@ -234,6 +234,8 @@ services:
       REDIS_PORT: 6379
       ENABLE_CACHE: ${ENABLE_CACHE:-true}
       CACHE_TTL: 60
+      # Hotdeal
+      HOTDEAL_STOCK_REDIS: ${HOTDEAL_STOCK_REDIS:-false}
       # gRPC
       GRPC_ENABLED: ${GRPC_ENABLED:-true}
       GRPC_PORT: 50051
@@ -312,6 +314,11 @@ services:
       DB_NAME: flash_deals
       DB_USER: flash
       DB_PASSWORD: flash1234
+      # Redis (for async order processing)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Async Order Processing
+      ASYNC_ORDER_ENABLED: ${ASYNC_ORDER_ENABLED:-false}
       # Product Service gRPC
       PRODUCT_GRPC_HOST: product
       PRODUCT_GRPC_PORT: 50051
@@ -326,6 +333,8 @@ services:
       retries: 5
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       product:
         condition: service_healthy

@@ -24,6 +24,9 @@ type Config struct {
 	EnableCache bool
 	CacheTTL    int
 
+	// Hotdeal
+	HotdealStockRedis bool
+
 	// gRPC
 	GRPCEnabled bool
 	GRPCPort    string
@@ -53,6 +56,9 @@ func Load() *Config {
 		// Cache
 		EnableCache: getEnvBool("ENABLE_CACHE", true),
 		CacheTTL:    getEnvInt("CACHE_TTL", 60),
+
+		// Hotdeal
+		HotdealStockRedis: getEnvBool("HOTDEAL_STOCK_REDIS", false),
 
 		// gRPC
 		GRPCEnabled: getEnvBool("GRPC_ENABLED", false),

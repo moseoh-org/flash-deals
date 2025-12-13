@@ -16,6 +16,13 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 
+	// Redis
+	RedisHost string
+	RedisPort string
+
+	// Async Order Processing
+	AsyncOrderEnabled bool
+
 	// Product Service gRPC
 	ProductGRPCHost string
 	ProductGRPCPort string
@@ -38,6 +45,13 @@ func Load() *Config {
 		DBUser:     getEnv("DB_USER", "flash"),
 		DBPassword: getEnv("DB_PASSWORD", "flash1234"),
 
+		// Redis
+		RedisHost: getEnv("REDIS_HOST", "redis"),
+		RedisPort: getEnv("REDIS_PORT", "6379"),
+
+		// Async Order Processing
+		AsyncOrderEnabled: getEnvBool("ASYNC_ORDER_ENABLED", false),
+
 		// Product Service gRPC
 		ProductGRPCHost: getEnv("PRODUCT_GRPC_HOST", "product"),
 		ProductGRPCPort: getEnv("PRODUCT_GRPC_PORT", "50051"),
@@ -47,6 +61,10 @@ func Load() *Config {
 		OTelServiceName:      getEnv("OTEL_SERVICE_NAME", "order-service"),
 		OTelExporterEndpoint: getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
 	}
+}
+
+func (c *Config) RedisAddr() string {
+	return c.RedisHost + ":" + c.RedisPort
 }
 
 func (c *Config) DatabaseURL() string {
