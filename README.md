@@ -45,12 +45,12 @@
 | 3차  | Product Go 전환         | 154ms (5.6배↓) | 253 req/s (5.5배↑)   |
 | 4차  | Order Go 전환           | 20ms (43배↓)   | 295 req/s (6.4배↑)   |
 
-### [선착순 주문 순서 미보장](docs/scenarios/fifo-ordering.md)
+### [재고 차감 시 Lock 경합](docs/scenarios/stock-lock-contention.md)
 
-| 개선 | 내용               | p95 응답시간 | 처리량              | 순서 보장 |
-| ---- | ------------------ | ------------ | ------------------- | --------- |
-| 기존 | DB Lock (동시)     | 19ms         | 160 req/s           | X         |
-| 1차  | Go Channel (FIFO)  | 14ms (26%↓)  | 303 req/s (1.9배↑)  | O (서버측) |
+| 개선 | 내용                 | p95 응답시간 | 처리량             |
+| ---- | -------------------- | ------------ | ------------------ |
+| 기존 | SELECT FOR UPDATE    | 19ms         | 160 req/s          |
+| 1차  | Go Channel (순차)    | 14ms (26%↓)  | 303 req/s (1.9배↑) |
 
 ## Documentation
 
