@@ -8,6 +8,7 @@ import (
 
 	"github.com/flash-deals/product/internal/config"
 	"github.com/flash-deals/product/internal/proto"
+	"github.com/flash-deals/product/internal/queue"
 	"github.com/flash-deals/product/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -19,11 +20,17 @@ import (
 
 type ProductServer struct {
 	proto.UnimplementedProductServiceServer
-	repo repository.ProductRepository
+	repo       repository.ProductRepository
+	stockQueue *queue.StockQueue
 }
 
 func NewProductServer(repo repository.ProductRepository) *ProductServer {
-	return &ProductServer{repo: repo}
+	// StockQueue 생성 (버퍼 크기: 10000)
+	stockQueue := queue.NewStockQueue(repo, 10000)
+	return &ProductServer{
+		repo:       repo,
+		stockQueue: stockQueue,
+	}
 }
 
 func (s *ProductServer) GetProduct(ctx context.Context, req *proto.GetProductRequest) (*proto.Product, error) {
@@ -94,8 +101,8 @@ func (s *ProductServer) UpdateStock(ctx context.Context, req *proto.UpdateStockR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid product ID: %v", err)
 	}
 
-	// 트랜잭션 내에서 FOR UPDATE 락과 재고 업데이트를 원자적으로 수행
-	row, err := s.repo.UpdateStockWithLock(ctx, id, req.Delta)
+	// Go Channel 큐를 통해 FIFO 순서로 재고 업데이트
+	row, err := s.stockQueue.UpdateStock(ctx, id, req.Delta)
 	if err != nil {
 		// 재고 부족 에러 처리
 		errMsg := err.Error()
